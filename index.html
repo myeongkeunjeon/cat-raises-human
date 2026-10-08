@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f6efe4">
+  <title>고양이가 인간을 키움</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <span class="pill" title="츄르">🐟 <b id="churu">0</b></span>
+      <span class="pill" title="무료 이용권">🎫 <b id="tickets">0</b></span>
+      <span class="pill" title="묘생 레벨">묘생 Lv.<b id="level">1</b></span>
+    </header>
+    <main id="screen"></main>
+    <nav class="tabbar">
+      <button data-tab="home"><i>🏠</i>집</button>
+      <button data-tab="map"><i>🗺️</i>동네</button>
+      <button data-tab="office"><i>🚪</i>인력사무소</button>
+      <button data-tab="book"><i>📖</i>도감</button>
+    </nav>
+  </div>
+  <div class="rotate">📱<p>세로로 돌려주세요</p></div>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
