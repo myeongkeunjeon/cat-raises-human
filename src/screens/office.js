@@ -8,7 +8,7 @@ import { play } from "../sound.js";
 import { openSheet, closeSheet, toast, esc } from "../ui.js";
 
 const pct = (x) => `${(Math.round(x * 10000) / 100).toFixed(2)}%`;
-let app, busy = false, skip = null;
+let app, busy = false, skip = null, coolUntil = 0;
 
 export function render(el, a) {
   app = a;
@@ -53,6 +53,7 @@ export function render(el, a) {
 }
 
 function start(el, free) {
+  if (busy || performance.now() < coolUntil) return; // 광클 방지: 연출 중이거나 방금 끝났으면 무시
   const res = pull(free);
   if (!res) return toast(free ? "무료 이용권이 없어요" : "츄르가 모자라요");
   app.changed(); // 저장 (이 화면은 다시 그려짐)
@@ -67,6 +68,7 @@ function start(el, free) {
     timers.forEach(clearTimeout);
     busy = false;
     skip = null;
+    coolUntil = performance.now() + 500;
     bldg.classList.remove("shake");
     bldg.classList.add(`glow-${res.grade}`, "open");
     showResult(res);

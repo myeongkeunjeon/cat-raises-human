@@ -3,11 +3,27 @@ import { state } from "./state.js";
 
 let ctx = null;
 
+let check = { audio: 0, wall: 0 };
+
 function ac() {
-  if (!ctx) {
+  // 폰에서 소리를 한꺼번에 너무 많이 내면 소리 엔진이 '돌아가는 중'인데 시계가 멈추는 경우가 있다.
+  // 1.5초 넘게 시계가 안 가면 엔진을 새로 만든다.
+  if (ctx && ctx.state === "running") {
+    const wall = performance.now();
+    if (wall - check.wall > 1500) {
+      if (check.wall && ctx.currentTime - check.audio < 0.1) {
+        try { ctx.close(); } catch (e) { /* 무시 */ }
+        ctx = null;
+        noiseBuf = null;
+      }
+      check = { audio: ctx ? ctx.currentTime : 0, wall };
+    }
+  }
+  if (!ctx || ctx.state === "closed") {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return null;
     ctx = new AC();
+    check = { audio: 0, wall: 0 };
   }
   if (ctx.state !== "running") ctx.resume().catch(() => {});
   return ctx;
@@ -138,7 +154,16 @@ export function beatTrack(a, start, bpm, beats, theme = {}) {
   return () => out.gain.setTargetAtTime(0, a.currentTime, 0.05);
 }
 
+// 같은 소리를 너무 빨리 반복하거나(광클), 1초에 너무 많이 내면 건너뛴다 (소리 엔진 과부하 방지)
+const lastPlay = {};
+let recent = [];
 export function play(name) {
   if (!soundOn()) return;
+  const t = performance.now();
+  if (t - (lastPlay[name] || 0) < 70) return;
+  recent = recent.filter((x) => t - x < 1000);
+  if (recent.length >= 24) return;
+  lastPlay[name] = t;
+  recent.push(t);
   try { SOUNDS[name]?.(); } catch (e) { /* 소리는 실패해도 무시 */ }
 }

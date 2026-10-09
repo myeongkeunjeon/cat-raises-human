@@ -98,17 +98,14 @@ export function startKneading(id, onDone) {
     lanes[n.lane].append(n.el);
   }
 
-  // 시계: 소리가 켜져 있으면 오디오 시계(비트와 정확히 맞음), 아니면 화면 시계
+  // 시계: 게임 판정은 항상 화면 시계로 (폰의 소리 엔진이 멈춰도 게임은 진행되게).
+  // 비트 음악은 같은 순간에 시작하도록 오디오 쪽에 예약한다. 20초 동안 어긋남은 몇 ms 수준.
+  const lead = LEAD_BEATS * sp + 0.1;
+  const start = performance.now() + lead * 1000;
+  const nowSec = () => (performance.now() - start) / 1000;
+  let stopMusic = () => {};
   const a = audioClock();
-  let nowSec, stopMusic = () => {};
-  if (a) {
-    const start = a.currentTime + LEAD_BEATS * sp + 0.1;
-    stopMusic = beatTrack(a, start - LEAD_BEATS * sp, K.bpm, LEAD_BEATS + Math.ceil(K.seconds / sp) + 1, theme);
-    nowSec = () => a.currentTime - start;
-  } else {
-    const start = performance.now() + (LEAD_BEATS * sp + 0.1) * 1000;
-    nowSec = () => (performance.now() - start) / 1000;
-  }
+  if (a) stopMusic = beatTrack(a, a.currentTime + lead - LEAD_BEATS * sp, K.bpm, LEAD_BEATS + Math.ceil(K.seconds / sp) + 1, theme);
 
   const score = () => notes.reduce((s, n) => s + (K.points[n.s] || 0), 0); // 놓침(miss)은 0점
 
