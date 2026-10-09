@@ -62,9 +62,15 @@ export const CONFIG = {
     { level: 10, need: 800,  capacity: 10, size: 8 },
     { level: 11, need: 920,  capacity: 12, size: 9 },
     { level: 12, need: 1040, capacity: 12, size: 9 },
-    { level: 13, need: 1160, capacity: 14, size: 9, floor: "2층 침실" },
-    { level: 14, need: 1280, capacity: 14, size: 9 },
-    { level: 15, need: 1400, capacity: 14, size: 9, floor: "옥상 정원" },
+    { level: 13, need: 1160, capacity: 12, size: 9, floor: "2층 침실" },
+    { level: 14, need: 1280, capacity: 12, size: 9 },
+    { level: 15, need: 1400, capacity: 12, size: 9, floor: "옥상 정원" },
+  ],
+  // 층별: capacity는 위 표가 1층 인원, 2층·옥상은 열리면 각각 이만큼 더 살 수 있다
+  floors: [
+    { name: "1층 거실",  unlock: 1 },
+    { name: "2층 침실",  unlock: 13, capacity: 4 },
+    { name: "옥상 정원", unlock: 15, capacity: 4 },
   ],
 
   // 코인: 집 꾸미기 전용 재화 (츄르는 고양이·뽑기용). 나중에 유료 상품 후보

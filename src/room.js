@@ -75,17 +75,25 @@ function wallPattern(id, d, skew, side) {
   return `<pattern id="${id}" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="skewY(${skew}) scale(${K})">${inner}</pattern>`;
 }
 
+// 층마다 놓을 수 있는 자리 (2층은 침대·책상이 붙박이, 옥상은 벽이 없음)
+export const FLOOR_SLOTS = [
+  null, // 1층: 모든 자리
+  ["wall", "floor", "curtain", "rug", "tower", "plant", "lamp", "shelf", "art", "tank", "lights", "ceiling", "cabinet"],
+  ["rug", "bed", "tower", "plant", "lamp", "tank"],
+];
+export const slotAllowed = (slot, floor) => !FLOOR_SLOTS[floor] || FLOOR_SLOTS[floor].includes(slot);
+
 // 장착된 아이템 꺼내기
 const pick = (deco, slot) => DECO_BY_ID[deco?.[slot]] || null;
 
 export function roomSVG(level, tod = timeOfDay(), floor = 0, deco = {}) {
-  if (floor === 2) { setLayout(6); return rooftopSVG(level, tod); }
+  if (floor === 2) { setLayout(6); return rooftopSVG(level, tod, deco); }
   if (floor === 1) setLayout(6);
   const [s1, s2] = SKY[tod];
   const night = tod === "night";
   const wall = pick(deco, "wall") || DECO_BY_ID.wall_basic;
-  const fl = floor === 1 ? DECO_BY_ID.floor_white : pick(deco, "floor") || DECO_BY_ID.floor_wood;
-  const wallD = floor === 1 ? { ...DECO_BY_ID.wall_sea, kind: "stripe", c: ["#d6e4f2", "#cbdcee", "#e2ecf7", "#d8e5f3"] } : wall;
+  const fl = pick(deco, "floor") || (floor === 1 ? DECO_BY_ID.floor_white : DECO_BY_ID.floor_wood);
+  const wallD = pick(deco, "wall") || (floor === 1 ? { ...DECO_BY_ID.wall_sea, kind: "stripe", c: ["#d6e4f2", "#cbdcee", "#e2ecf7", "#d8e5f3"] } : wall);
   let s = `<svg viewBox="0 0 ${VIEW.w} ${VIEW.h}" class="room-svg" aria-hidden="true">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient>
@@ -120,30 +128,36 @@ export function roomSVG(level, tod = timeOfDay(), floor = 0, deco = {}) {
   if (night) s += circ(sunG, 0, 84, 6, "#f4efe0") + [[w0 + 0.5, 88], [w0 + 1, 70], [w0 + 1.8, 62]].map(([g, z]) => circ(g, 0, z, 1.2, "#fff")).join("");
   else s += circ(sunG, 0, 82, 7, tod === "day" ? "#ffe27a" : "#ffb36b") + ell(w0 + 0.6, 0, 70, 12, 5, "#fff", 'opacity=".85"');
   s += poly([[N / 2 - 0.05, 0, 50], [N / 2 + 0.05, 0, 50], [N / 2 + 0.05, 0, 94], [N / 2 - 0.05, 0, 94]], "#c49a74");
-  s += curtainSVG(floor === 1 ? DECO_BY_ID.curt_sky : pick(deco, "curtain") || DECO_BY_ID.curt_pink, w0, w1);
+  s += curtainSVG(pick(deco, "curtain") || (floor === 1 ? DECO_BY_ID.curt_sky : DECO_BY_ID.curt_pink), w0, w1);
   if (!night) s += poly([[w0 + 0.15, 0, 50], [w1 - 0.15, 0, 50], [w1 + 0.7, 2.6, 0], [w0 + 0.85, 2.6, 0]], "url(#beam)", 'class="beam"');
 
-  if (floor === 1) return s + bedroom(level, night) + (night ? NIGHT : "") + "</svg>";
+  if (floor === 1) return s + bedroom(level, night, !!pick(deco, "art")) + itemsSVG(deco, 1, night, tod) + (night ? NIGHT : "") + "</svg>";
+  s += itemsSVG(deco, 0, night, tod);
+  // 밥그릇
+  s += box(N - 0.8, N / 2 - 0.3, 0.55, 0.4, 5, ["#4a90e2", "#3a78c2", "#2f68aa"]);
+  s += ell(N - 0.53, N / 2 - 0.1, 5, 7, 3, "#c8643c");
+  if (night) s += NIGHT;
+  return s + "</svg>";
+}
 
-  // 꾸미기 아이템 (뒤쪽부터)
-  const it = (slot) => pick(deco, slot);
+// 꾸미기 아이템 (뒤쪽부터). floor에 놓을 수 있는 자리만
+function itemsSVG(deco, floor, night, tod) {
+  let s = "";
+  const it = (slot) => (slotAllowed(slot, floor) ? pick(deco, slot) : null);
   if (it("lights")) s += lightsSVG();
   if (it("shelf")) s += shelfSVG(it("shelf"));
   if (it("art")) s += artSVG(it("art"));
   if (it("cabinet")) s += cabinetSVG();
   if (it("rug")) s += rugSVG(it("rug"));
-  s += bedSVG(it("bed") || DECO_BY_ID.bed_box);
+  if (floor === 0) s += bedSVG(it("bed") || DECO_BY_ID.bed_box);
+  else if (it("bed")) s += bedSVG(it("bed"));
   if (it("plant")) s += plantSVG(it("plant"));
   if (it("tank")) s += tankSVG();
   if (it("sofa")) s += sofaSVG(it("sofa"));
   if (it("lamp")) s += lampSVG(it("lamp"), night || tod === "dusk");
   if (it("tower")) s += towerSVG(it("tower"));
   if (it("ceiling")) s += chandelierSVG();
-  // 밥그릇
-  s += box(N - 0.8, N / 2 - 0.3, 0.55, 0.4, 5, ["#4a90e2", "#3a78c2", "#2f68aa"]);
-  s += ell(N - 0.53, N / 2 - 0.1, 5, 7, 3, "#c8643c");
-  if (night) s += NIGHT;
-  return s + "</svg>";
+  return s;
 }
 
 function floorSVG(fl) {
@@ -186,7 +200,7 @@ function rugSVG(d) {
   }
   if (d.kind === "cat") {
     const [cx, cy] = iso(m, m, 0.5);
-    const r = (b - a) * 15 * K;
+    const r = (b - a) * 9 * K;
     return `<path d="M${cx - r * 0.9} ${cy - r * 0.15} L${cx - r * 0.75} ${cy - r * 0.75} L${cx - r * 0.35} ${cy - r * 0.42} Z M${cx + r * 0.9} ${cy - r * 0.15} L${cx + r * 0.75} ${cy - r * 0.75} L${cx + r * 0.35} ${cy - r * 0.42} Z" fill="${d.c[0]}"/>
       <ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r * 0.55}" fill="${d.c[0]}"/>
       <ellipse cx="${cx - r * 0.3}" cy="${cy - r * 0.05}" rx="${r * 0.07}" ry="${r * 0.05}" fill="${d.c[1]}"/><ellipse cx="${cx + r * 0.3}" cy="${cy - r * 0.05}" rx="${r * 0.07}" ry="${r * 0.05}" fill="${d.c[1]}"/>`;
@@ -312,7 +326,7 @@ function cabinetSVG() {
 const NIGHT = `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".22"/>`;
 
 // 2층 침실 (Lv6~): 침대, 옷장, 책상, 빈백. Lv8에 별 조명
-function bedroom(level, night) {
+function bedroom(level, night, hasArt) {
   let s = "";
   s += poly([[2.2, 2.2, 0.5], [4.8, 2.2, 0.5], [4.8, 4.8, 0.5], [2.2, 4.8, 0.5]], "#b8d8c8", 'opacity=".85"');
   // 침대 (왼쪽 벽)
@@ -333,7 +347,7 @@ function bedroom(level, night) {
   // 빈백
   const [vx, vy] = iso(4.9, 3.6, 0);
   s += `<ellipse cx="${vx}" cy="${vy - 8}" rx="24" ry="16" fill="#f5b83d"/><ellipse cx="${vx - 4}" cy="${vy - 14}" rx="14" ry="7" fill="#f8cb66"/>`;
-  if (level >= 14) { // 벽 포스터
+  if (level >= 14 && !hasArt) { // 벽 포스터 (벽 장식을 놓으면 대신 그것)
     s += poly([[0, 3.8, 60], [0, 4.9, 60], [0, 4.9, 96], [0, 3.8, 96]], "#7a4cc2");
     const [qx, qy] = iso(0, 4.35, 78);
     s += `<path d="M${qx} ${qy - 8} l3 6 l7 1 l-5 5 l1 7 l-6 -3 l-6 3 l1 -7 l-5 -5 l7 -1 z" fill="#ffd34d"/>`;
@@ -352,7 +366,7 @@ function bedroom(level, night) {
 }
 
 // 옥상 정원 (Lv7~): 벽 대신 하늘과 난간, 화단, 파라솔, 꼬마전구. Lv8에 트로피와 무지개 깃발
-function rooftopSVG(level, tod) {
+function rooftopSVG(level, tod, deco = {}) {
   const [s1, s2] = SKY[tod];
   const night = tod === "night";
   let s = `<svg viewBox="0 0 ${VIEW.w} ${VIEW.h}" class="room-svg" aria-hidden="true">
@@ -402,6 +416,7 @@ function rooftopSVG(level, tod) {
     const [cx, cy] = iso(4.9, 4.9, 0);
     s += `<rect x="${cx - 10}" y="${cy - 12}" width="20" height="12" fill="#b8860b"/><path d="M${cx - 12} ${cy - 34} L${cx + 12} ${cy - 34} Q${cx + 10} ${cy - 14} ${cx} ${cy - 14} Q${cx - 10} ${cy - 14} ${cx - 12} ${cy - 34} Z" fill="#f2c335"/>`;
   }
+  s += itemsSVG(deco, 2, night, tod);
   if (night) s += `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".18"/>`;
   return s + "</svg>";
 }

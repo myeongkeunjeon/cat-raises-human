@@ -2,11 +2,21 @@
 // + 묘생 레벨 장식, 레어·전설 반짝이 (코드로 겹쳐 그림)
 
 export const CAT_TYPES = {
-  black:  { name: "까망",   tail: "#1f1d1d" },
-  cheese: { name: "치즈",   tail: "#e8a15a" },
-  tuxedo: { name: "턱시도", tail: "#2a2727" },
-  calico: { name: "삼색이", tail: "#e39a52" },
+  black:  { name: "까망",   tail: "#1f1d1d", body: "#1f1d1d", eye: "#ffffff" },
+  cheese: { name: "치즈",   tail: "#e8a15a", body: "#e8a15a", eye: "#3b2a1e" },
+  tuxedo: { name: "턱시도", tail: "#2a2727", body: "#2a2727", eye: "#f4efe6" },
+  calico: { name: "삼색이", tail: "#e39a52", body: "#f4efe6", eye: "#3b2a1e" },
 };
+
+// 흐뭇한 눈 (캐릭터 시안 표정 시트의 '흐뭇'): 원래 눈을 몸 색으로 덮고 웃는 눈썹 모양을 그린다
+function happyEyes(t) {
+  const c = CAT_TYPES[t];
+  return `<svg viewBox="0 0 220 220" class="cat-layer cat-happy" aria-hidden="true">
+    <ellipse cx="96" cy="112" rx="10" ry="11" fill="${c.body}"/><ellipse cx="124" cy="113" rx="10" ry="11" fill="${c.body}"/>
+    <path d="M87 115 Q96 104 105 115 M115 116 Q124 105 133 116" stroke="${c.eye}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+    <ellipse cx="84" cy="123" rx="6" ry="3.5" fill="#f2a7a0" opacity=".8"/><ellipse cx="136" cy="123" rx="6" ry="3.5" fill="#f2a7a0" opacity=".8"/>
+  </svg>`;
+}
 
 // 묘생 레벨별 모습 (도감처럼 다음 단계가 기대되게)
 export const CAT_LOOKS = {
@@ -56,6 +66,7 @@ export function catStage(type, level) {
     ${level >= 10 ? `<svg viewBox="0 0 220 220" class="cat-layer">${CAPE}</svg>` : ""}
     ${level >= 6 ? CUSHION : ""}
     <img class="cat-layer cat-body" src="assets/cats/${t}.svg" alt="${CAT_TYPES[t].name}" draggable="false">
+    ${happyEyes(t)}
     <svg viewBox="0 0 220 220" class="cat-layer">${bowl}${tail}${head}</svg>
     ${level >= 15 ? sparkles(10, "rainbow") : level >= 8 ? sparkles(4 + Math.floor((level - 8) / 2) * 2, "gold") : ""}
   </div>`;

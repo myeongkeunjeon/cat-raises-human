@@ -374,7 +374,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .chip { font-size: 12px; background: #fff; border-radius: 999px; padding: 3px 8px; box-shadow: 0 2px 0 #0000000f; white-space: nowrap; }
 .chip.warn { background: #fff1c9; }
 .diorama { position: relative; width: calc(100% + 64px); margin: 4px -32px 0; aspect-ratio: 400 / 340; isolation: isolate; } /* 캐릭터 겹침 순서가 방 밖(시트·미니게임)으로 새지 않게 */
-#screen:has(.home) { overflow-x: hidden; }
+#screen:has(.home) { overflow-x: clip; } /* 방이 화면보다 넓어도 옆으로 밀리지 않게 */
 .room-svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 10px 14px #6b4a2f33); }
 .room-svg .beam { animation: beam 6s ease-in-out infinite; }
 @keyframes beam { 50% { opacity: .65; } }
@@ -393,7 +393,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .actors .butler.walking .actor-body { animation: waddle .32s ease-in-out infinite; }
 .actors .butler .actor-body.flip .bwrap { transform: scaleX(-1); }
 @keyframes waddle { 0%, 100% { transform: rotate(-4deg) translateY(0); } 50% { transform: rotate(4deg) translateY(-4px); } }
-.actors .cat { width: calc(27% * var(--k, 1)); }
+.actors .cat { width: calc(34% * var(--k, 1)); }
 .actors .cat .cat-stage { width: 100%; }
 .fbar.mini { position: absolute; left: 50%; top: 2%; width: 44%; height: 5px; margin-left: -22%; z-index: 1; box-shadow: 0 0 0 2px #fff; }
 .actors .envelope { position: absolute; left: 50%; top: -14%; transform: translateX(-50%); font-size: 20px; z-index: 2; animation: bob 1.2s ease-in-out infinite; }
@@ -550,3 +550,20 @@ body { background: radial-gradient(circle at 50% 0, #fff6ea, #f1dfc9); }
 .stag.lock { background: #eee; color: #888; }
 .shop-preview { position: relative; margin: -6px -8px 4px; aspect-ratio: 400 / 340; }
 .shop-preview .room-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sheet-x { z-index: 5; background: #fffaf3cc; border-radius: 50%; } /* 미리보기 그림이 X를 덮지 않게 */
+.house-body .fl { font-weight: normal; color: var(--muted); font-size: 11px; }
+.sheet .floors { margin-bottom: 6px; }
+
+/* ================= 주인공 고양이 ================= */
+.cat-happy { opacity: 0; transition: opacity .15s; animation: breathe 3.2s ease-in-out infinite; transform-origin: 50% 64%; }
+.actors .cat.happy .cat-happy { opacity: 1; }
+.actors .cat .spot { position: absolute; left: 50%; bottom: -10%; width: 130%; height: 34%; margin-left: -65%; border-radius: 50%; z-index: -2;
+  background: radial-gradient(closest-side, #fff6c8, #ffe9a066 60%, transparent); animation: spot 3s ease-in-out infinite; }
+@keyframes spot { 50% { transform: scale(1.06); opacity: .85; } }
+.actors .cat .nameplate { position: absolute; left: 50%; top: -8%; transform: translateX(-50%); white-space: nowrap; z-index: 2;
+  background: #fff; border-radius: 999px; padding: 2px 9px 2px 7px; font-family: "Jua", sans-serif; font-size: 12px; box-shadow: 0 2px 0 #ecdcc6; }
+.cat-say { position: absolute; left: 50%; bottom: 118%; transform: translateX(-50%) scale(.6); opacity: 0; z-index: 3; pointer-events: none;
+  width: max-content; max-width: 210px; background: #fff; border-radius: 14px; padding: 6px 10px; font-size: 13px; line-height: 1.35; text-align: center;
+  box-shadow: 0 4px 10px #6b4a2f22; transition: transform .2s cubic-bezier(.3,1.6,.5,1), opacity .2s; }
+.cat-say::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: #fff; }
+.cat-say.show { opacity: 1; transform: translateX(-50%) scale(1); }

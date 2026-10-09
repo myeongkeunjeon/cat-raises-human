@@ -1,4 +1,6 @@
-// 디버그 메뉴: URL에 ?debug=1 을 붙이면 톱니바퀴 버튼이 나온다
+// 설정 메뉴(⚙️): 누구나 통계 보기·복사, 처음부터 다시 하기.
+// 개발자 기능(시간 빨리 감기, 재화·집사 지급 등)은 주소 뒤에 ?debug=1 을 붙였을 때만 보인다.
+// 지인 테스트 링크에는 ?debug=1을 빼고 보낸다. 정식 출시 전에는 개발자 기능 코드를 빼거나 서버 확인으로 바꾼다.
 import { BUTLERS } from "./data/butlers.js";
 import { ITEMS } from "./data/items.js";
 import { state, tick, addButler, resetSave, statsText, now } from "./state.js";
@@ -7,20 +9,36 @@ import { openSheet, toast, esc } from "./ui.js";
 const MIN = 60e3;
 let lastPick = "overtime"; // 메뉴를 다시 그려도 고른 집사 유지
 
+const DEV = new URLSearchParams(location.search).get("debug") === "1";
+
 export function initDebug(root, app) {
-  if (new URLSearchParams(location.search).get("debug") !== "1") return;
   const gear = document.createElement("button");
   gear.className = "debug-gear";
   gear.textContent = "⚙️";
-  gear.setAttribute("aria-label", "디버그 메뉴");
+  gear.setAttribute("aria-label", "설정");
   gear.addEventListener("click", () => openMenu(app));
   root.append(gear);
 }
 
+// 누구나 보는 설정: 통계(지인 테스트용), 처음부터 다시
+function playerMenuHTML() {
+  return `
+    <h3>설정</h3>
+    <h4>테스트 통계</h4>
+    <p class="note">테스트에 참여해 주셔서 고마워요! 일주일 뒤 아래 '통계 복사하기'를 눌러 보내 주세요.</p>
+    <div class="row wrap">
+      <button class="btn sm" data-act="stats">통계 보기</button>
+      <button class="btn sm" data-act="copy">통계 복사하기</button>
+    </div>
+    <h4>처음부터 다시</h4>
+    <button class="btn sm danger" data-act="reset">저장 지우고 새로 시작</button>`;
+}
+
 function menuHTML() {
+  if (!DEV) return playerMenuHTML();
   const opts = BUTLERS.map((b) => `<option value="${b.id}" ${b.id === lastPick ? "selected" : ""}>${b.name}</option>`).join("");
   return `
-    <h3>디버그 메뉴</h3>
+    <h3>개발자 메뉴 <small class="note">(?debug=1)</small></h3>
     <p class="note">게임 시각: ${new Date(now()).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
       (빨리 감기 +${Math.round(state.debugOffsetMs / MIN)}분)</p>
     <h4>시간 빨리 감기</h4>
@@ -58,6 +76,7 @@ function menuHTML() {
 
 function openMenu(app) {
   openSheet(menuHTML(), (act, el) => {
+    if (!DEV && !["stats", "copy", "reset"].includes(act)) return; // 개발자 기능은 ?debug=1일 때만
     const all = Object.values(state.butlers);
     switch (act) {
       case "ff":

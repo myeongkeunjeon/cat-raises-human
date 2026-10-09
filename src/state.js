@@ -34,7 +34,7 @@ function freshState() {
     cat: { type: null, name: "냥이" }, // type이 비어 있으면 첫 실행 → 고양이 고르기
     churu: CONFIG.startChuru,
     coins: CONFIG.coins.start,                                    // 꾸미기 전용 재화
-    deco: { owned: Object.values(STARTER), equipped: { ...STARTER } }, // 꾸미기: 가진 것, 자리별 장착
+    deco: { owned: Object.values(STARTER), equipped: [{ ...STARTER }, {}, {}] }, // 꾸미기: 가진 것, 층별·자리별 장착
     freeTickets: CONFIG.gacha.freeTicketsPerDay,
     slots: Object.fromEntries(Object.keys(CONFIG.workplaces).map((k) => [k, CONFIG.slots.start])), // 일터별 자리 수
     rent: 0,         // 건물주 월세 적립
@@ -82,6 +82,7 @@ export function load() {
     console.warn("불러오기 실패, 새로 시작합니다", e);
   }
   state = saved && saved.version === 1 ? merge(freshState(), saved) : freshState();
+  if (!Array.isArray(state.deco.equipped)) state.deco.equipped = [state.deco.equipped || { ...STARTER }, {}, {}]; // 옛 저장본: 1층만
   if (Array.isArray(state.pickups)) { // 옛 저장본: 이름 목록 → 개수
     const counts = {};
     for (const n of state.pickups) counts[n] = (counts[n] || 0) + 1;
@@ -131,8 +132,27 @@ export function catLevelInfo() {
   return { ...info, sum, next };
 }
 
+// ---------- 층과 수용 인원 ----------
+export const floorOf = (id) => state.butlers[id].floor || 0;
+export function floorOpen(f) {
+  return catLevelInfo().level >= CONFIG.floors[f].unlock;
+}
+export function floorCap(f) {
+  if (!floorOpen(f)) return 0;
+  return f === 0 ? catLevelInfo().capacity : CONFIG.floors[f].capacity;
+}
+export function housedOn(f) {
+  return ownedIds().filter((id) => state.butlers[id].housed && floorOf(id) === f).length;
+}
 export function housedCount() {
   return ownedIds().filter((id) => state.butlers[id].housed).length;
+}
+export function totalCapacity() {
+  return CONFIG.floors.reduce((s, _, f) => s + floorCap(f), 0);
+}
+// 빈자리가 있는 첫 층 (없으면 -1)
+function freeFloor() {
+  return CONFIG.floors.findIndex((_, f) => housedOn(f) < floorCap(f));
 }
 
 // 새 집사 등록. 집이 꽉 찼으면 도감에만 등록(housed=false)
@@ -145,12 +165,14 @@ export function addButler(id) {
     b.affection = Math.min(CONFIG.affection.max, b.affection + CONFIG.affection.duplicate);
     return "duplicate";
   }
-  const room = housedCount() < catLevelInfo().capacity;
+  const f = freeFloor();
+  const room = f >= 0;
   state.butlers[id] = {
     affection: def.startAffection || 0,
     fatigue: 0,
     status: "home", // home | working | done
     housed: room,
+    floor: room ? f : 0, // 사는 층
     petsToday: 0,
     work: null,
   };
@@ -199,37 +221,56 @@ export function moveOut(id) {
   state.butlers[id].housed = false;
   return true;
 }
-export function moveIn(id) {
+// f층에 들이기 (대기 중이거나 다른 층에 살던 집사)
+export function moveIn(id, f) {
   const b = state.butlers[id];
-  if (!b || b.housed || housedCount() >= catLevelInfo().capacity) return false;
+  if (!b || housedOn(f) >= floorCap(f)) return false;
+  if (b.housed && b.status !== "home") return false; // 근무 중·정산 대기는 옮길 수 없음
   b.housed = true;
+  b.floor = f;
   return true;
 }
 
 // ---------- 꾸미기 ----------
-export function buyDeco(id) {
+// 아이템은 하나씩만 가진다. 놓는 층을 고르면 다른 층에서는 빠진다.
+// state.deco.equipped = [1층 {자리: id}, 2층 {...}, 옥상 {...}]
+export function decoFloorOf(id) {
+  return state.deco.equipped.findIndex((m) => Object.values(m).includes(id));
+}
+export function buyDeco(id, f = 0) {
   const d = DECO_BY_ID[id];
   if (!d || state.deco.owned.includes(id) || state.coins < d.price || catLevelInfo().level < d.lv) return false;
   state.coins -= d.price;
   state.deco.owned.push(id);
-  state.deco.equipped[d.slot] = id;
+  equipDeco(id, f);
   return true;
 }
-export function equipDeco(id, on = true) {
+// f층에 놓기. f가 -1이면 빼기 (1층의 벽지·바닥·커튼·침대는 비울 수 없음)
+export function equipDeco(id, f) {
   const d = DECO_BY_ID[id];
   if (!d || !state.deco.owned.includes(id)) return false;
-  if (on) state.deco.equipped[d.slot] = id;
-  else if (!STARTER[d.slot]) delete state.deco.equipped[d.slot]; // 벽지·바닥·커튼·침대는 비울 수 없음
-  else return false;
+  const cur = decoFloorOf(id);
+  if (f < 0) {
+    if (cur < 0 || (cur === 0 && STARTER[d.slot])) return false;
+    delete state.deco.equipped[cur][d.slot];
+    return true;
+  }
+  if (cur === 0 && STARTER[d.slot] && f !== 0) {
+    state.deco.equipped[0][d.slot] = STARTER[d.slot]; // 1층 기본으로 되돌림
+  } else if (cur >= 0) delete state.deco.equipped[cur][d.slot];
+  state.deco.equipped[f][d.slot] = id;
   return true;
 }
 
 // 수용 인원이 늘었으면 대기 중인 집사 자동 입주
 function moveInWaiting() {
-  const cap = catLevelInfo().capacity;
   for (const id of ownedIds()) {
-    if (housedCount() >= cap) break;
-    if (!state.butlers[id].housed) state.butlers[id].housed = true;
+    const b = state.butlers[id];
+    if (b.housed) continue;
+    const f = freeFloor();
+    if (f < 0) break;
+    b.housed = true;
+    b.floor = f;
   }
 }
 
