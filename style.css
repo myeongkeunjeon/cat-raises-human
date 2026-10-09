@@ -63,10 +63,10 @@ h2, h3, h4 { margin: 0 0 8px; }
 /* 인력사무소 */
 .rates-btn { position: absolute; right: 14px; margin-top: -38px; border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
 #screen { position: relative; }
-.office { margin: 16px auto 8px; width: 200px; background: #c99b6d; border-radius: 12px 12px 0 0; padding: 12px 20px 0; }
-.office-sign { background: #fffaf2; text-align: center; font-weight: bold; border-radius: 6px; padding: 4px; margin-bottom: 12px; font-size: 14px; }
-.door { height: 170px; display: flex; gap: 3px; background: #6b4a2f; padding: 3px 3px 0; }
-.door-left, .door-right { flex: 1; background: #8a6040; }
+
+
+
+
 .pity { text-align: center; color: var(--muted); font-size: 14px; }
 .rates { width: 100%; border-collapse: collapse; font-size: 14px; }
 .rates th, .rates td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--line); }
@@ -453,3 +453,64 @@ body { background: radial-gradient(circle at 50% 0, #fff6ea, #f1dfc9); }
 .floor-btn small { font-size: 10px; }
 .diorama.floor-in { animation: floorIn .35s ease-out; }
 @keyframes floorIn { from { opacity: 0; transform: translateY(10px); } }
+
+/* ================= 인력사무소 (2.5D 건물) ================= */
+.office-head { display: flex; justify-content: space-between; align-items: center; }
+.office-head .rates-btn { position: static; margin: 0; }
+.street { position: relative; margin: 10px -14px 4px; padding: 18px 0 0; background: linear-gradient(#cfe9f7 0 72%, #d8cbb6 72% 76%, #bfae95 76%); }
+.bldg { position: relative; width: 230px; margin: 0 auto; height: 300px; perspective: 700px; }
+.bldg-front { position: absolute; left: 0; bottom: 18px; width: 200px; height: 250px; background: #f6d7b0; border-radius: 6px 6px 0 0;
+  box-shadow: inset 0 -10px 0 #e8c193; }
+.bldg-side { position: absolute; left: 200px; bottom: 18px; width: 30px; height: 250px; background: #d9b58c; transform: skewY(-30deg); transform-origin: 0 100%; }
+.bldg-roof { position: absolute; left: -8px; bottom: 268px; width: 216px; height: 16px; background: #c0623f; border-radius: 4px; z-index: 1; }
+.bldg-roof::after { content: ""; position: absolute; left: 216px; bottom: 0; width: 30px; height: 16px; background: #a24f2c; transform: skewY(-30deg); transform-origin: 0 100%; }
+.bldg-sign { position: absolute; left: 20px; right: 20px; top: 14px; padding: 6px; text-align: center; background: #fffdf8; border-radius: 10px;
+  font-family: "Jua", sans-serif; font-size: 18px; box-shadow: 0 3px 0 #e2cdb2; }
+.bldg-windows { position: absolute; left: 18px; right: 18px; top: 62px; display: flex; justify-content: space-between; }
+.bldg-windows i { width: 44px; height: 34px; border-radius: 4px; background: linear-gradient(135deg, #bfe3f7 60%, #e4f4fc 60%); border: 4px solid #fff; }
+.awning { position: absolute; left: 34px; right: 34px; top: 118px; height: 20px; border-radius: 0 0 10px 10px;
+  background: repeating-linear-gradient(90deg, #ff8a5b 0 16px, #fff 16px 32px); box-shadow: 0 4px 0 #0000001a; z-index: 2; }
+.doorway { position: absolute; left: 50%; bottom: 10px; width: 104px; height: 112px; margin-left: -52px; background: #3a2a20; border-radius: 6px 6px 0 0;
+  transform-style: preserve-3d; overflow: visible; }
+.door { position: absolute; top: 0; bottom: 0; width: 50%; background: #8a5a3a; border: 3px solid #6b4430; transition: transform .6s cubic-bezier(.3,1.4,.5,1); z-index: 3; }
+.door i { position: absolute; top: 50%; width: 6px; height: 6px; border-radius: 50%; background: #f2c335; }
+.door-l { left: 0; transform-origin: 0 50%; border-radius: 6px 0 0 0; } .door-l i { right: 6px; }
+.door-r { right: 0; transform-origin: 100% 50%; border-radius: 0 6px 0 0; } .door-r i { left: 6px; }
+.door-light { position: absolute; inset: 0; opacity: 0; transition: opacity .5s; border-radius: 6px 6px 0 0; }
+.door-butler { position: absolute; left: 50%; bottom: -4px; width: 110px; margin-left: -55px; opacity: 0; transform: scale(.6) translateY(10px); z-index: 2;
+  transition: transform .5s cubic-bezier(.3,1.6,.5,1) .15s, opacity .3s .15s; }
+.bldg-step { position: absolute; left: 100px; bottom: 6px; width: 130px; height: 12px; margin-left: -65px; background: #bfae95; border-radius: 3px; }
+.poster { position: absolute; right: 4px; bottom: 60px; width: 34px; padding: 4px 0; background: #fff; border-radius: 3px; font-size: 9px; line-height: 1.2;
+  text-align: center; transform: rotate(4deg); box-shadow: 0 2px 4px #0002; }
+.bldg.shake .doorway { animation: rattle .12s linear infinite; }
+@keyframes rattle { 25% { transform: translateX(-2px) rotate(-.6deg); } 75% { transform: translateX(2px) rotate(.6deg); } }
+/* 문틈 빛: 문이 살짝 벌어지며 등급 색이 샌다 */
+.bldg[class*="glow-"] .door-l { transform: rotateY(-24deg); }
+.bldg[class*="glow-"] .door-r { transform: rotateY(24deg); }
+.bldg[class*="glow-"] .door-light { opacity: 1; }
+.bldg.glow-common .door-light { background: radial-gradient(circle, #fff, #fff6e0); box-shadow: 0 0 40px 10px #fff8e8; }
+.bldg.glow-rare .door-light { background: radial-gradient(circle, #e6f3ff, #6fb0ff); box-shadow: 0 0 50px 16px #6fb0ffaa; }
+.bldg.glow-legend .door-light { background: radial-gradient(circle, #fff8d0, #ffc21a); box-shadow: 0 0 70px 26px #ffc21acc; animation: legendPulse .5s ease-in-out infinite alternate; }
+@keyframes legendPulse { to { box-shadow: 0 0 90px 36px #ffd34dee; } }
+.bldg.open .door-l { transform: rotateY(-105deg); }
+.bldg.open .door-r { transform: rotateY(105deg); }
+.bldg.open .door-butler { opacity: 1; transform: scale(1) translateY(0); }
+.pity { text-align: center; margin: 6px 0; }
+.pity b { font-family: "Jua", sans-serif; font-size: 18px; color: var(--accent); }
+.center { text-align: center; }
+
+/* 뽑기 결과 */
+.gacha-result { position: relative; text-align: center; overflow: hidden; padding-top: 4px; }
+.res-rays { position: absolute; left: 50%; top: 70px; width: 340px; height: 340px; margin: -170px; border-radius: 50%; z-index: 0;
+  background: repeating-conic-gradient(#ffffff00 0 10deg, #fff3d0 10deg 20deg); animation: spin 12s linear infinite; opacity: .7; }
+.gacha-result.g-rare .res-rays { background: repeating-conic-gradient(#ffffff00 0 10deg, #d8ebff 10deg 20deg); }
+.gacha-result.g-legend .res-rays { background: repeating-conic-gradient(#ffffff00 0 10deg, #ffe08a 10deg 20deg); opacity: 1; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.gacha-result > * { position: relative; z-index: 1; }
+.res-art { width: 150px; margin: 0 auto; animation: popIn2 .45s cubic-bezier(.3,1.6,.5,1); }
+@keyframes popIn2 { from { transform: scale(.3); opacity: 0; } }
+.gacha-result h3 { font-size: 24px; margin: 6px 0 2px; }
+.res-tag { display: inline-block; margin: 4px 0; padding: 3px 12px; border-radius: 999px; font-family: "Jua", sans-serif; }
+.res-tag.new { background: #ff8a5b; color: #fff; }
+.res-tag.dup { background: #f1e7d8; }
+.res-ability { font-size: 13px; background: #fff; border-radius: 12px; padding: 8px; margin: 8px 0; }

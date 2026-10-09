@@ -69,6 +69,10 @@ const SOUNDS = {
   miss:    () => tone([200, 140], 0.12, { type: "triangle", vol: 0.06 }),
   purr:    () => { for (let i = 0; i < 6; i++) tone(70, 0.08, { type: "sawtooth", vol: 0.05, delay: i * 0.1 }); },
   melt:    () => tone([600, 150], 0.7, { vol: 0.12, vibrato: 25 }),
+  knock:   () => [0, 0.16, 0.32].forEach((d) => tone([180, 120], 0.08, { type: "triangle", vol: 0.2, delay: d })),
+  rise:    () => tone([300, 1200], 0.9, { type: "sine", vol: 0.08, vibrato: 8 }),
+  door:    () => { tone([500, 260], 0.25, { type: "sawtooth", vol: 0.04 }); tone([900, 1400], 0.2, { vol: 0.08, delay: 0.15 }); },
+  newbie:  () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, i === 3 ? 0.4 : 0.12, { type: "triangle", vol: 0.12, delay: 0.1 + i * 0.09 })),
   levelup: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.5 : 0.15, { type: "square", vol: 0.05, delay: i * 0.12 })),
 };
 
