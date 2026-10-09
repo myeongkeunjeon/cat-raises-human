@@ -373,7 +373,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .chips { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
 .chip { font-size: 12px; background: #fff; border-radius: 999px; padding: 3px 8px; box-shadow: 0 2px 0 #0000000f; white-space: nowrap; }
 .chip.warn { background: #fff1c9; }
-.diorama { position: relative; width: calc(100% + 64px); margin: 4px -32px 0; aspect-ratio: 400 / 340; }
+.diorama { position: relative; width: calc(100% + 64px); margin: 4px -32px 0; aspect-ratio: 400 / 340; isolation: isolate; } /* 캐릭터 겹침 순서가 방 밖(시트·미니게임)으로 새지 않게 */
 #screen:has(.home) { overflow-x: hidden; }
 .room-svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 10px 14px #6b4a2f33); }
 .room-svg .beam { animation: beam 6s ease-in-out infinite; }
