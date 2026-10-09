@@ -567,3 +567,15 @@ body { background: radial-gradient(circle at 50% 0, #fff6ea, #f1dfc9); }
   box-shadow: 0 4px 10px #6b4a2f22; transition: transform .2s cubic-bezier(.3,1.6,.5,1), opacity .2s; }
 .cat-say::after { content: ""; position: absolute; left: 50%; bottom: -6px; margin-left: -6px; border: 6px solid transparent; border-bottom: 0; border-top-color: #fff; }
 .cat-say.show { opacity: 1; transform: translateX(-50%) scale(1); }
+
+/* 쓰다듬기 장면 */
+.actors .butler.petting .actor-body { animation: petting .45s ease-in-out infinite; transform-origin: 50% 100%; }
+@keyframes petting { 0%, 100% { transform: rotate(8deg) translateX(4px); } 50% { transform: rotate(14deg) translateX(8px) translateY(2px); } }
+.actors .cat.purring .actor-body { animation: purrWiggle .3s ease-in-out infinite; }
+@keyframes purrWiggle { 0%, 100% { transform: scale(1.03, .97) rotate(-1.5deg); } 50% { transform: scale(.98, 1.03) rotate(1.5deg); } }
+.aff-pop { position: absolute; left: 50%; bottom: 108%; transform: translateX(-50%); z-index: 5; background: #fff; border-radius: 12px; padding: 4px 8px;
+  box-shadow: 0 3px 8px #6b4a2f33; display: flex; flex-direction: column; align-items: center; gap: 2px; white-space: nowrap; animation: popIn2 .3s ease-out; }
+.aff-pop b { color: #e0607e; font-family: "Jua", sans-serif; font-weight: normal; font-size: 15px; }
+.aff-pop small { font-size: 10px; color: var(--muted); }
+.aff-bar { width: 64px; height: 6px; border-radius: 3px; background: #f3e3e7; overflow: hidden; }
+.aff-bar i { display: block; height: 100%; background: linear-gradient(90deg, #f7a8c0, #f0647d); transition: width 1.2s ease-out .2s; }

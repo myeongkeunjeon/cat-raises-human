@@ -116,7 +116,7 @@ export function render(el, a) {
   clearInterval(wanderTimer);
   wanderTimer = setInterval(() => {
     if (!el.isConnected || !el.querySelector(".diorama")) return clearInterval(wanderTimer);
-    const actors = [...el.querySelectorAll(".butler.actor:not(.walking)")];
+    const actors = [...el.querySelectorAll(".butler.actor:not(.walking):not(.busy)")];
     if (!actors.length) return;
     const btn = actors[Math.floor(Math.random() * actors.length)];
     const r = Math.random();
@@ -297,6 +297,44 @@ function catSay(root) {
   say._t = setTimeout(() => say.classList.remove("show"), 2600);
 }
 
+// 쓰다듬기 장면: 집사가 고양이에게 걸어가 쓰다듬고 → 고양이가 그르릉 좋아하고 → 호감도가 차오른다
+function petScene(id, before, n) {
+  const btn = document.querySelector(`.butler.actor[data-id="${id}"]`);
+  const cat = document.querySelector(".actors .cat");
+  const after = state.butlers[id].affection;
+  if (!btn || !cat) { // 다른 층을 보고 있으면 짧게
+    play("meow");
+    toast(`${BUTLER_BY_ID[id].name} 호감도 +${n}`);
+    return app.changed();
+  }
+  const c = catSpot();
+  btn.classList.add("busy"); // 돌아다니기 잠시 멈춤
+  walkTo(btn, { gx: c.gx - 2.0, gy: c.gy + 0.25 }, () => { // 고양이 왼쪽 옆
+    const body = btn.querySelector(".actor-body");
+    body.classList.remove("flip");
+    btn.classList.add("petting");
+    btn.style.zIndex = 9999; // 쓰다듬는 손이 고양이 앞에 보이게
+    cat.classList.add("happy", "purring");
+    play("purr");
+    setTimeout(() => play("meow"), 500);
+    // 하트가 퐁퐁
+    const catBody = cat.querySelector(".actor-body");
+    for (let i = 0; i < 6; i++) setTimeout(() => heart(catBody), i * 160);
+    // 집사 머리 위: +호감도와 막대가 차오름
+    const pop = document.createElement("span");
+    pop.className = "aff-pop";
+    pop.innerHTML = `<b>♡ +${n}</b><span class="aff-bar"><i style="width:${before}%"></i></span><small>${before} → ${after}</small>`;
+    btn.append(pop);
+    requestAnimationFrame(() => requestAnimationFrame(() => (pop.querySelector("i").style.width = `${after}%`)));
+    setTimeout(() => {
+      btn.classList.remove("petting", "busy");
+      cat.classList.remove("happy", "purring");
+      pop.remove();
+      app.changed(); // 저장 + 상태 줄 갱신
+    }, 2200);
+  });
+}
+
 // 집사가 고양이 곁으로 와서 절하거나 츄르를 바친다 (인간이 고양이를 모시는 집)
 function serveCat(btn) {
   const c = catSpot();
@@ -370,14 +408,11 @@ function openButler(id) {
         startKneading(id, () => app.changed());
       }
       if (act === "pet") {
+        const before = b.affection;
         const n = pet(id);
         if (n === null) return;
-        play("meow");
         closeSheet();
-        app.changed();
-        toast(`${def.name} 호감도 +${n}`);
-        const btn = document.querySelector(`.butler[data-id="${id}"]`);
-        if (btn) { bounce(btn.querySelector(".actor-body")); heart(btn.querySelector(".actor-body")); }
+        petScene(id, before, n);
       }
     });
 }
