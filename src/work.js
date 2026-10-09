@@ -47,7 +47,7 @@ export function expectedChuru(id, place, tired) {
   if (def.aptitude === place || def.allAptitude) c *= 1 + CONFIG.aptitudeBonus;
   c *= 1 + affectionStep(b.affection) * CONFIG.affection.incomeBonusPerStep;
   if (tired) c *= 1 - CONFIG.fatigue.tiredPenalty;
-  if (state.butlers.churuboss) c *= 1 + BUTLER_BY_ID.churuboss.incomeBonusAll;
+  if (state.butlers.churuboss?.housed) c *= 1 + BUTLER_BY_ID.churuboss.incomeBonusAll; // 집에 살 때만
   c *= 1 + itemBonus("income", place) / 100;
   return Math.floor(c);
 }
@@ -101,7 +101,7 @@ function finish(id) {
     pickup = list[Math.floor(Math.random() * list.length)];
   }
   b.status = "done";
-  b.result = { place, churu: churu + bonus, bonus, journal: pickJournal(id), pickup };
+  b.result = { place, churu: churu + bonus, bonus, coins: Math.max(1, Math.floor((churu + bonus) * CONFIG.coins.settleRate)), journal: pickJournal(id), pickup };
 }
 
 // state.tick()에서 호출. 끝난 근무를 처리하고, 집에 있던 시간만큼 피로를 회복시킨다.
@@ -133,6 +133,7 @@ export function settle(id) {
   if (b.status !== "done") return null;
   const r = b.result;
   state.churu += r.churu;
+  state.coins += r.coins || 0;
   if (r.pickup) state.pickups[r.pickup] = (state.pickups[r.pickup] || 0) + 1;
   b.status = "home";
   b.work = null;

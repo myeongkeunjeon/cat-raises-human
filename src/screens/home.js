@@ -1,10 +1,10 @@
 // 집: 방 단면, 그릇 속 고양이, 바닥에 선 집사들
 import { CONFIG } from "../config.js";
 import { BUTLER_BY_ID } from "../data/butlers.js";
-import { state, affectionStep, catLevelInfo, housedCount, pet } from "../state.js";
+import { state, affectionStep, catLevelInfo, housedCount, pet, canMoveOut, moveOut, moveIn } from "../state.js";
 import { startKneading } from "../kneading.js";
 import { catStage, butlerSVG, CAT_LOOKS } from "../art.js";
-import { roomSVG, isoPct, timeOfDay, WALK, CAT_SPOT, FLOORS } from "../room.js";
+import { roomSVG, isoPct, timeOfDay, walkZone, catSpot, setLayout, scale, FLOORS } from "../room.js";
 import { fmtLeft } from "./map.js";
 import { now } from "../state.js";
 import { play } from "../sound.js";
@@ -32,9 +32,10 @@ function floorOf(ids, id, open) {
 }
 
 function randomSpot() {
-  const r = () => WALK.min + Math.random() * (WALK.max - WALK.min);
-  let p;
-  do p = { gx: r(), gy: r() }; while (Math.hypot(p.gx - CAT_SPOT.gx, p.gy - CAT_SPOT.gy) < 1.3); // 고양이 자리는 비워 둔다
+  const z = walkZone(), c = catSpot();
+  const r = () => z.min + Math.random() * (z.max - z.min);
+  let p, n = 0;
+  do p = { gx: r(), gy: r() }; while (Math.hypot(p.gx - c.gx, p.gy - c.gy) < 1.1 && ++n < 20); // 고양이 자리는 비워 둔다
   return p;
 }
 
@@ -50,12 +51,14 @@ export function render(el, a) {
   const lv = catLevelInfo();
   const open = FLOORS.filter((f) => lv.level >= f.unlock).length;
   if (floor >= open) floor = 0;
+  setLayout(floor === 0 ? lv.size : 6); // 1층은 레벨마다 넓어짐
+  const z = walkZone();
   const homeIds = Object.keys(state.butlers).filter((id) => state.butlers[id].housed && state.butlers[id].status !== "working");
   const ids = homeIds.filter((id) => floorOf(homeIds, id, open) === floor);
   for (const id of Object.keys(pos)) if (!ids.includes(id)) delete pos[id];
   const butlers = ids.map((id) => {
     const b = state.butlers[id];
-    pos[id] ||= randomSpot();
+    if (!pos[id] || pos[id].gx > z.max || pos[id].gy > z.max) pos[id] = randomSpot();
     const f = Math.round(b.fatigue);
     const done = b.status === "done";
     return `<button class="butler actor ${done ? "done" : ""}" data-id="${id}" style="${placeStyle(pos[id])}" aria-label="${BUTLER_BY_ID[id].name}">
@@ -89,16 +92,17 @@ export function render(el, a) {
           ? `<button class="floor-btn ${i === floor ? "on" : ""}" data-floor="${i}">${f.icon} ${f.name}</button>`
           : `<span class="floor-btn locked">🔒 ${f.name} <small>Lv.${f.unlock}</small></span>`).join("")}
       </div>
-      <div class="diorama ${timeOfDay()} f${floor} ${floorChanged ? "floor-in" : ""}">
-        ${roomSVG(lv.level, timeOfDay(), floor)}
+      <div class="diorama ${timeOfDay()} f${floor} ${floorChanged ? "floor-in" : ""}" style="--k:${scale()}">
+        ${roomSVG(lv.level, timeOfDay(), floor, state.deco.equipped)}
         <div class="actors">
-          <button class="cat actor" data-act="cat" style="${placeStyle(CAT_SPOT)}" aria-label="${esc(state.cat.name)} 쓰다듬기">
+          <button class="cat actor" data-act="cat" style="${placeStyle(catSpot())}" aria-label="${esc(state.cat.name)} 쓰다듬기">
             <span class="actor-body">${catStage(state.cat.type, lv.level)}</span><span class="shadow"></span>
           </button>
           ${butlers}
         </div>
         <i class="mote" style="left:48%;top:40%"></i><i class="mote" style="left:56%;top:52%;animation-delay:1.3s"></i><i class="mote" style="left:63%;top:44%;animation-delay:2.6s"></i>
       </div>
+      <div class="roster-head"><b>집사들</b><button class="btn sm" data-act="housing">👥 입주 관리</button></div>
       <div class="roster">${rosterHTML()}</div>
       ${waiting && lv.next ? `<p class="hint">호감도 합계 ${lv.sum}/${lv.next.need} → 묘생 Lv.${lv.next.level}이 되면 ${lv.next.capacity}명까지 살 수 있어요</p>` : ""}
       ${!homeIds.length ? `<p class="hint">집에 있는 집사가 없어요. 동네에서 퇴근을 기다려 주세요</p>` : ""}
@@ -140,9 +144,44 @@ export function render(el, a) {
     const act = e.target.closest("[data-act]")?.dataset.act;
     if (act === "cat") return poke(e.target.closest(".cat").querySelector(".actor-body"));
     if (act === "all") openSettle(doneIds);
+    if (act === "housing") openHousing();
     if (act === "rent") { play("coin"); play("churu"); toast(`월세 🐟 ${collectRent()} 받았어요`); app.changed(); }
   };
 }
+
+// 입주 관리: 누구를 집에 살게 할지 고른다 (집사마다 능력이 달라서)
+function openHousing() {
+  const lv = catLevelInfo();
+  const ids = Object.keys(state.butlers);
+  const row = (id) => {
+    const b = state.butlers[id], def = BUTLER_BY_ID[id];
+    const busy = b.status === "working" ? "근무 중" : b.status === "done" ? "정산 대기" : "";
+    const btn = b.housed
+      ? `<button class="btn sm" data-act="out" data-id="${id}" ${canMoveOut(id) ? "" : "disabled"}>${busy || "내보내기"}</button>`
+      : `<button class="btn sm primary" data-act="in" data-id="${id}">들이기</button>`;
+    return `<div class="house-row ${b.housed ? "in" : ""}">
+      <span class="ros-face"><img src="assets/butlers/${id}.svg" alt=""></span>
+      <span class="house-body"><b>${def.name}</b> <span class="grade g-${def.grade}">${GRADE_NAME[def.grade]}</span><small>${esc(def.ability)}</small></span>
+      ${btn}
+    </div>`;
+  };
+  openSheet(`
+    <h3>입주 관리 <small class="note">${housedCount()} / ${lv.capacity}명</small></h3>
+    <p class="note">집에 사는 집사만 출근하고 능력을 발휘해요. 자리가 꽉 차면 누군가를 내보내고 들이세요.</p>
+    <h4>집에 사는 집사</h4>
+    <div class="house-list">${ids.filter((id) => state.butlers[id].housed).map(row).join("") || `<p class="note">없어요</p>`}</div>
+    <h4>대기 중</h4>
+    <div class="house-list">${ids.filter((id) => !state.butlers[id].housed).map(row).join("") || `<p class="note">대기 중인 집사가 없어요</p>`}</div>`,
+    (act, el) => {
+      const id = el.dataset.id;
+      if (act === "out" && moveOut(id)) { play("pop"); app.changed(); openHousing(); }
+      if (act === "in") {
+        if (moveIn(id)) { play("newbie"); app.changed(); openHousing(); }
+        else toast("자리가 꽉 찼어요. 먼저 누군가를 내보내 주세요");
+      }
+    });
+}
+const GRADE_NAME = { common: "일반", rare: "레어", legend: "전설" };
 
 // 아래 집사 상태 줄: 피로, 정산 대기, 근무 중 남은 시간
 function rosterHTML() {
@@ -228,7 +267,7 @@ function openSettle(queue) {
       <p class="note">${CONFIG.workplaces[r.place].name} 근무를 마치고 돌아왔어요</p>
       <div class="settle-art">${butlerSVG(def)}</div>
       <h3>${def.name}</h3>
-      <div class="settle-churu">🐟 +${r.churu}${r.bonus ? ` <small>(덤 +${r.bonus})</small>` : ""}</div>
+      <div class="settle-churu">🐟 +${r.churu} <span class="coin-gain">🪙 +${r.coins || 0}</span>${r.bonus ? ` <small>(덤 +${r.bonus})</small>` : ""}</div>
       <blockquote class="journal">“${esc(r.journal)}”</blockquote>
       ${r.pickup ? `<div class="pickup"><b>🎁 ${esc(r.pickup)}</b>을(를) 주워 왔어요<br><small>${itemDesc(r.pickup, state.pickups[r.pickup] || 1)}${(state.pickups[r.pickup] || 1) > 1 ? ` (${Math.min(state.pickups[r.pickup], ITEM_MAX_LEVEL)}단계)` : ""}</small></div>` : ""}
       <button class="btn primary" data-act="next">${rest.length ? `다음 (${rest.length}명 남음)` : "확인"}</button>

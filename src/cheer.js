@@ -152,6 +152,8 @@ export function startCheer(id, onDone) {
       w.cheers = (w.cheers || 0) + 1;
       aff = ratio >= 0.5 ? gainAffection(id, Math.round(C.affection * ratio) || 1) : 0;
     }
+    const coins = Math.round(CONFIG.coins.cheerMax * ratio);
+    state.coins += coins;
     play(ratio >= 0.9 ? "churu" : ratio >= 0.5 ? "pop" : "miss");
     react(ratio >= 0.5 ? "happy" : "hurt");
     const mins = Math.round(cut / 60e3), secs = Math.round(cut / 1000);
@@ -163,6 +165,7 @@ export function startCheer(id, onDone) {
       <ul>
         <li>근무 시간 <b>−${mins ? `${mins}분` : `${secs}초`}</b></li>
         ${aff ? `<li>호감도 <b>+${aff}</b></li>` : ""}
+        ${coins ? `<li>코인 <b>+${coins}</b></li>` : ""}
         ${tally.wasted ? `<li class="note">좋은 말을 ${tally.wasted}번 쳐 버렸어요</li>` : ""}
         <li class="note">남은 응원 ${cheersLeft(id)}번</li>
       </ul>

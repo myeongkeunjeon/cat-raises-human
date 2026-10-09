@@ -33,6 +33,7 @@ function menuHTML() {
     <h4>재화</h4>
     <div class="row wrap">
       <button class="btn sm" data-act="churu">츄르 +1000</button>
+      <button class="btn sm" data-act="coins">코인 +1000</button>
       <button class="btn sm" data-act="ticket">무료 이용권 +1</button>
     </div>
     <h4>집사</h4>
@@ -65,6 +66,7 @@ function openMenu(app) {
         toast(`${el.textContent} 빨리 감음`);
         break;
       case "churu": state.churu += 1000; break;
+      case "coins": state.coins += 1000; break;
       case "ticket": state.freeTickets += 1; break;
       case "f0": all.forEach((b) => (b.fatigue = 0)); break;
       case "f100": all.forEach((b) => (b.fatigue = 100)); break;

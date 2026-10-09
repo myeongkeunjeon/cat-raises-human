@@ -10,14 +10,13 @@ export const CAT_TYPES = {
 
 // 묘생 레벨별 모습 (도감처럼 다음 단계가 기대되게)
 export const CAT_LOOKS = {
-  1: "평범한 그릇",
-  2: "리본을 단 냥이",
-  3: "도자기 그릇 + 리본",
-  4: "방석 위의 왕관 냥이",
-  5: "황금 그릇의 냥이 대왕",
-  6: "망토 두른 냥이 대왕",
-  7: "보석 왕관의 냥이 황제",
-  8: "무지개 빛 전설의 냥이",
+  1: "평범한 그릇의 냥이", 2: "리본을 단 냥이", 3: "리본을 단 냥이",
+  4: "도자기 그릇의 냥이", 5: "도자기 그릇의 냥이",
+  6: "방석 위의 왕관 냥이", 7: "방석 위의 왕관 냥이",
+  8: "황금 그릇의 냥이 대왕", 9: "황금 그릇의 냥이 대왕",
+  10: "망토 두른 냥이 대왕", 11: "망토 두른 냥이 대왕",
+  12: "보석 왕관의 냥이 황제", 13: "보석 왕관의 냥이 황제", 14: "보석 왕관의 냥이 황제",
+  15: "무지개 빛 전설의 냥이",
 };
 
 // 그릇에 담긴 액체 고양이 (고르기 화면 등 장식 없는 기본형)
@@ -50,15 +49,15 @@ const CUSHION = `<svg viewBox="0 0 220 220" class="cat-layer"><ellipse cx="110" 
 // 집 화면의 고양이: 묘생 레벨에 따라 그릇·장식이 바뀐다
 export function catStage(type, level) {
   const t = CAT_TYPES[type] ? type : "cheese";
-  const bowl = level >= 5 ? BOWLS[5] : level >= 3 ? BOWLS[3] : "";
+  const bowl = level >= 8 ? BOWLS[5] : level >= 4 ? BOWLS[3] : "";
   const tail = bowl ? `<path d="M170 138 Q192 140 190 170" fill="none" stroke="${CAT_TYPES[t].tail}" stroke-width="12" stroke-linecap="round"/>` : "";
-  const head = level >= 7 ? CROWN + GEMS : level >= 4 ? CROWN : level >= 2 ? RIBBON : "";
+  const head = level >= 12 ? CROWN + GEMS : level >= 6 ? CROWN : level >= 2 ? RIBBON : "";
   return `<div class="cat-stage lv${level}">
-    ${level >= 6 ? `<svg viewBox="0 0 220 220" class="cat-layer">${CAPE}</svg>` : ""}
-    ${level >= 4 ? CUSHION : ""}
+    ${level >= 10 ? `<svg viewBox="0 0 220 220" class="cat-layer">${CAPE}</svg>` : ""}
+    ${level >= 6 ? CUSHION : ""}
     <img class="cat-layer cat-body" src="assets/cats/${t}.svg" alt="${CAT_TYPES[t].name}" draggable="false">
     <svg viewBox="0 0 220 220" class="cat-layer">${bowl}${tail}${head}</svg>
-    ${level >= 8 ? sparkles(10, "rainbow") : level >= 5 ? sparkles(6 + (level - 5) * 2, "gold") : ""}
+    ${level >= 15 ? sparkles(10, "rainbow") : level >= 8 ? sparkles(4 + Math.floor((level - 8) / 2) * 2, "gold") : ""}
   </div>`;
 }
 

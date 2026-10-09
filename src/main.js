@@ -8,8 +8,9 @@ import * as home from "./screens/home.js";
 import * as map from "./screens/map.js";
 import * as office from "./screens/office.js";
 import * as book from "./screens/book.js";
+import * as shop from "./screens/shop.js";
 
-const SCREENS = { home, map, office, book };
+const SCREENS = { home, map, office, shop, book };
 let current = "home";
 let saveEnabled = true;
 
@@ -26,6 +27,7 @@ function renderTopbar() {
   const lv = catLevelInfo();
   document.getElementById("churu").textContent = Math.floor(state.churu).toLocaleString();
   document.getElementById("tickets").textContent = state.freeTickets;
+  document.getElementById("coins").textContent = Math.floor(state.coins).toLocaleString();
   document.getElementById("level").textContent = lv.level;
   const s = document.getElementById("sound");
   s.textContent = soundOn() ? "🔊" : "🔇";

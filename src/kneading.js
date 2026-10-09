@@ -216,6 +216,7 @@ export function startKneading(id, onDone) {
       <ul>
         <li>피로 ${Math.round(res.fatigueBefore)} → <b>${Math.round(res.fatigueAfter)}</b></li>
         <li>호감도 <b>+${res.affection}</b></li>
+        ${res.coins ? `<li>코인 <b>+${res.coins}</b></li>` : ""}
         ${res.churu ? `<li>츄르 <b>+${res.churu}</b>${def.id === "landlord" ? " (건물주 보너스 2배)" : ""}</li>` : ""}
         ${res.vet ? `<li>다른 집사들 피로 −${res.vet}</li>` : ""}
       </ul>
@@ -259,6 +260,8 @@ function apply(id, r, accuracy) {
   const affection = gainAffection(id, r.affection + extra);
   const churu = r.churu * (r.id === "perfect" && id === "landlord" ? 2 : 1);
   state.churu += churu;
+  const coins = CONFIG.coins.knead[r.id] || 0;
+  state.coins += coins;
   if (def.shareAffection) { // 고양이 카페 사장: 다른 집사들도 기분이 좋아진다
     for (const [oid, o] of Object.entries(state.butlers)) {
       if (oid !== id && o.housed && o.status !== "working") gainAffection(oid, def.shareAffection);
@@ -275,5 +278,5 @@ function apply(id, r, accuracy) {
   k.count++;
   k.results[r.id] = (k.results[r.id] || 0) + 1;
   k.accuracySum += accuracy;
-  return { fatigueBefore, fatigueAfter: b.fatigue, affection, churu, vet };
+  return { fatigueBefore, fatigueAfter: b.fatigue, affection, churu, coins, vet };
 }

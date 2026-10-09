@@ -3,6 +3,7 @@ import { CONFIG } from "./config.js";
 import { BUTLER_BY_ID } from "./data/butlers.js";
 import { advanceWork } from "./work.js";
 import { ITEMS, itemValue } from "./data/items.js";
+import { DECO_BY_ID, STARTER } from "./data/deco.js";
 
 const SAVE_KEY = "catRaisesHuman.save.v1";
 const HOUR = 3600e3;
@@ -32,6 +33,8 @@ function freshState() {
     createdAt: t,
     cat: { type: null, name: "냥이" }, // type이 비어 있으면 첫 실행 → 고양이 고르기
     churu: CONFIG.startChuru,
+    coins: CONFIG.coins.start,                                    // 꾸미기 전용 재화
+    deco: { owned: Object.values(STARTER), equipped: { ...STARTER } }, // 꾸미기: 가진 것, 자리별 장착
     freeTickets: CONFIG.gacha.freeTicketsPerDay,
     slots: Object.fromEntries(Object.keys(CONFIG.workplaces).map((k) => [k, CONFIG.slots.start])), // 일터별 자리 수
     rent: 0,         // 건물주 월세 적립
@@ -185,6 +188,42 @@ export function pet(id) {
   return gainAffection(id, CONFIG.affection.petAmount, { pet: true });
 }
 
+// ---------- 입주 관리 (누가 집에 살지 고르기) ----------
+// 근무 중이거나 정산 대기인 집사는 내보낼 수 없다
+export function canMoveOut(id) {
+  const b = state.butlers[id];
+  return b.housed && b.status === "home";
+}
+export function moveOut(id) {
+  if (!canMoveOut(id)) return false;
+  state.butlers[id].housed = false;
+  return true;
+}
+export function moveIn(id) {
+  const b = state.butlers[id];
+  if (!b || b.housed || housedCount() >= catLevelInfo().capacity) return false;
+  b.housed = true;
+  return true;
+}
+
+// ---------- 꾸미기 ----------
+export function buyDeco(id) {
+  const d = DECO_BY_ID[id];
+  if (!d || state.deco.owned.includes(id) || state.coins < d.price || catLevelInfo().level < d.lv) return false;
+  state.coins -= d.price;
+  state.deco.owned.push(id);
+  state.deco.equipped[d.slot] = id;
+  return true;
+}
+export function equipDeco(id, on = true) {
+  const d = DECO_BY_ID[id];
+  if (!d || !state.deco.owned.includes(id)) return false;
+  if (on) state.deco.equipped[d.slot] = id;
+  else if (!STARTER[d.slot]) delete state.deco.equipped[d.slot]; // 벽지·바닥·커튼·침대는 비울 수 없음
+  else return false;
+  return true;
+}
+
 // 수용 인원이 늘었으면 대기 중인 집사 자동 입주
 function moveInWaiting() {
   const cap = catLevelInfo().capacity;
@@ -209,6 +248,8 @@ export function tick() {
   const dk = dayKey(t);
   if (dk > state.dayKey) {
     state.dayKey = dk;
+    state.coins += CONFIG.coins.daily;
+    events.push(`오늘의 코인 +${CONFIG.coins.daily}`);
     if (state.freeTickets < CONFIG.gacha.freeTicketsPerDay) {
       state.freeTickets = CONFIG.gacha.freeTicketsPerDay;
       events.push("새 하루! 무료 이용권이 생겼어요");

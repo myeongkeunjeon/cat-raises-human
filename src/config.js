@@ -46,15 +46,34 @@ export const CONFIG = {
   dayResetHourKST: 5,
   pickupChance: 0.15,
 
-  catLevels: [ // 호감도 합계 → 수용 인원
-    { level: 1, need: 0,   capacity: 3 },
-    { level: 2, need: 100, capacity: 4 },
-    { level: 3, need: 250, capacity: 5 },
-    { level: 4, need: 450, capacity: 6 },
-    { level: 5, need: 700, capacity: 8 },
-    // v0.1 이후 추가 (집사 14종): 층이 늘어난다. 6층 2층 침실, 7층 옥상 정원, 8은 집사 전원 호감도 100
-    { level: 6, need: 950,  capacity: 10, floor: "2층 침실" },
-    { level: 7, need: 1200, capacity: 12, floor: "옥상 정원" },
-    { level: 8, need: 1400, capacity: 14 },
+  // 묘생 레벨 (호감도 합계 → 집 크기·수용 인원). v0.1 이후 15레벨로 확장:
+  // 홀수 레벨(1·3·5·7·9·11)마다 방이 넓어지고(size = 바닥 칸 수), 13에 2층 침실, 15에 옥상 정원
+  // 짝수 레벨은 상점 꾸미기 아이템이 열리는 단계
+  catLevels: [
+    { level: 1,  need: 0,    capacity: 3,  size: 4 },
+    { level: 2,  need: 40,   capacity: 3,  size: 4 },
+    { level: 3,  need: 100,  capacity: 4,  size: 5 },
+    { level: 4,  need: 170,  capacity: 4,  size: 5 },
+    { level: 5,  need: 250,  capacity: 6,  size: 6 },
+    { level: 6,  need: 340,  capacity: 6,  size: 6 },
+    { level: 7,  need: 450,  capacity: 8,  size: 7 },
+    { level: 8,  need: 560,  capacity: 8,  size: 7 },
+    { level: 9,  need: 680,  capacity: 10, size: 8 },
+    { level: 10, need: 800,  capacity: 10, size: 8 },
+    { level: 11, need: 920,  capacity: 12, size: 9 },
+    { level: 12, need: 1040, capacity: 12, size: 9 },
+    { level: 13, need: 1160, capacity: 14, size: 9, floor: "2층 침실" },
+    { level: 14, need: 1280, capacity: 14, size: 9 },
+    { level: 15, need: 1400, capacity: 14, size: 9, floor: "옥상 정원" },
   ],
+
+  // 코인: 집 꾸미기 전용 재화 (츄르는 고양이·뽑기용). 나중에 유료 상품 후보
+  coins: {
+    start: 100,
+    settleRate: 0.25,                           // 정산 츄르의 25%만큼 코인
+    knead: { perfect: 15, good: 8, okay: 3 },   // 꾹꾹이 결과별
+    cheerMax: 6,                                // 응원 가기 최대
+    daily: 30,                                  // 하루 첫 접속(새벽 5시 기준)
+  },
+
 };
