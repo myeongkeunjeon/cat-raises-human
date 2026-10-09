@@ -38,6 +38,7 @@ function menuHTML() {
     <div class="row wrap">
       <button class="btn sm" data-act="f0">모든 집사 피로 0</button>
       <button class="btn sm" data-act="f100">모든 집사 피로 100</button>
+      <button class="btn sm" data-act="aff">모든 집사 호감도 +20</button>
     </div>
     <div class="row">
       <select id="dbg-butler">${opts}</select>
@@ -65,6 +66,7 @@ function openMenu(app) {
       case "ticket": state.freeTickets += 1; break;
       case "f0": all.forEach((b) => (b.fatigue = 0)); break;
       case "f100": all.forEach((b) => (b.fatigue = 100)); break;
+      case "aff": all.forEach((b) => (b.affection = Math.min(100, b.affection + 20))); tick().forEach(toast); break;
       case "give": {
         const id = (lastPick = document.getElementById("dbg-butler").value);
         const r = addButler(id);

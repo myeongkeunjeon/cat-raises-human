@@ -42,6 +42,7 @@ function freshState() {
     lastTick: t,
     catLevel: 1,
     debugOffsetMs: 0,
+    settings: { sound: true },
     stats: {
       firstRun: t,
       lastSeen: t,

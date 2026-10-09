@@ -3,6 +3,7 @@ import { load, save, tick, state, catLevelInfo, recordVisit, addPlaySeconds } fr
 import { initUI, toast } from "./ui.js";
 import { initDebug } from "./debug.js";
 import { showCatSelect } from "./screens/catselect.js";
+import { play, unlockAudio, soundOn } from "./sound.js";
 import * as home from "./screens/home.js";
 import * as map from "./screens/map.js";
 import * as office from "./screens/office.js";
@@ -26,6 +27,9 @@ function renderTopbar() {
   document.getElementById("churu").textContent = Math.floor(state.churu).toLocaleString();
   document.getElementById("tickets").textContent = state.freeTickets;
   document.getElementById("level").textContent = lv.level;
+  const s = document.getElementById("sound");
+  s.textContent = soundOn() ? "🔊" : "🔇";
+  s.setAttribute("aria-label", soundOn() ? "소리 끄기" : "소리 켜기");
 }
 
 function renderAll() {
@@ -44,9 +48,15 @@ function start() {
 
   document.querySelector(".tabbar").addEventListener("click", (e) => {
     const tab = e.target.closest("button")?.dataset.tab;
-    if (tab && tab !== current) { current = tab; renderAll(); }
+    if (tab && tab !== current) { current = tab; play("tap"); renderAll(); }
   });
 
+  unlockAudio();
+  document.getElementById("sound").addEventListener("click", () => {
+    state.settings.sound = !soundOn();
+    play("tap");
+    app.changed();
+  });
   initDebug(document.querySelector(".topbar"), app);
   renderAll();
   if (!state.cat.type) {
@@ -62,6 +72,7 @@ function start() {
     if (document.hidden) return;
     const events = tick();
     events.forEach(toast);
+    if (events.some((e) => e.includes("넓어졌다"))) play("levelup");
     addPlaySeconds(1);
     if (events.length) app.changed();
     else {

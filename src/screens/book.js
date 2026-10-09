@@ -4,6 +4,7 @@ import { BUTLERS, BUTLER_BY_ID, GRADES } from "../data/butlers.js";
 import { state, affectionStep } from "../state.js";
 import { butlerSVG } from "../art.js";
 import { openSheet, esc } from "../ui.js";
+import { play } from "../sound.js";
 
 const UNKNOWN_SMELL = "킁킁… 아직 모르겠다";
 
@@ -28,6 +29,7 @@ function openDetail(id) {
   const def = BUTLER_BY_ID[id];
   const b = state.butlers[id];
   const step = affectionStep(b.affection);
+  play(def.grade === "legend" ? "legend" : def.grade === "rare" ? "rare" : "pop");
   const notes = [0, 1, 2, 3, 4].map((i) => {
     const open = i < step && def.smells[i];
     return `<li class="${open ? "" : "locked"}">${open ? def.smells[i] : UNKNOWN_SMELL}</li>`;

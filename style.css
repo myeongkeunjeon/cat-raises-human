@@ -42,12 +42,12 @@ h2, h3, h4 { margin: 0 0 8px; }
 /* 집 */
 .room { position: relative; height: 100%; min-height: 380px; display: flex; flex-direction: column; align-items: center; }
 .cat-name { margin-top: 8px; font-weight: bold; }
-.cat { width: 180px; margin-top: 4px; }
+.cat { width: 190px; margin-top: 2px; border: 0; background: none; padding: 0; position: relative; }
 .cat-svg, .butler-svg { display: block; width: 100%; height: auto; }
 .floor-row { margin-top: auto; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: flex-end; padding-bottom: 4px; z-index: 1; }
 .floor { width: calc(100% + 28px); height: 3px; background: #b9a68d; flex: none; }
 .butler { border: 0; background: none; width: 88px; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.butler .butler-svg { width: 96px; margin: -8px 0 -12px; }
+.butler .butler-svg { width: 96px; margin: -8px 0 -12px; display: block; }
 .butler .label { font-size: 11px; line-height: 1.2; text-align: center; }
 .fbar { width: 46px; height: 6px; background: #ddd2c2; border-radius: 3px; overflow: hidden; }
 .fbar i { display: block; height: 100%; }
@@ -191,3 +191,50 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .countdown { font-variant-numeric: tabular-nums; }
 @media (prefers-reduced-motion: reduce) { .scene-butler, .envelope { animation: none !important; } }
 .pick-name { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }
+
+/* ---------- 생동감 ---------- */
+.sound-btn { cursor: pointer; padding: 5px 9px; }
+
+/* 고양이: 레벨별 겹친 그림 + 숨쉬기 */
+.cat-stage { position: relative; width: 100%; aspect-ratio: 1; }
+.cat-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cat-body { animation: breathe 3.2s ease-in-out infinite; transform-origin: 50% 64%; }
+@keyframes breathe { 50% { transform: scale(1.025, 0.975); } }
+.cat-look { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.float-heart { position: absolute; top: 20%; color: #f08aa0; font-size: 26px; pointer-events: none; animation: floatUp 1s ease-out forwards; }
+@keyframes floatUp { to { transform: translateY(-60px) scale(1.4); opacity: 0; } }
+.hop { animation: hop .35s ease-out; }
+@keyframes hop { 30% { transform: translateY(-12px) scale(1.05, .95); } 60% { transform: translateY(0) scale(.95, 1.05); } }
+
+/* 창문: 한국 시간에 따라 하늘색이 바뀐다 */
+.room { position: relative; }
+.window { position: absolute; left: 4px; top: 150px; width: 64px; height: 76px; border: 5px solid #c9b79c; border-radius: 6px; overflow: hidden; }
+.window::after { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 4px; margin-left: -2px; background: #c9b79c; box-shadow: 0 0 0 0 transparent; }
+.window i { position: absolute; width: 18px; height: 18px; border-radius: 50%; right: 8px; top: 10px; }
+.window.day { background: linear-gradient(#8ecdf2, #cdeafb); } .window.day i { background: #ffe27a; }
+.window.dawn { background: linear-gradient(#f7c8a8, #fde9c9); } .window.dawn i { background: #ffb36b; top: 40px; }
+.window.dusk { background: linear-gradient(#f29a7a, #f7cfa0); } .window.dusk i { background: #ff8a5c; top: 44px; }
+.window.night { background: linear-gradient(#26304d, #3d4a70); } .window.night i { background: #f4efe0; box-shadow: -5px -3px 0 0 #2b3556 inset; }
+
+/* 집 집사: 저마다 다른 박자로 살짝 흔들림 */
+.butler .bwrap { animation: idle 2.6s ease-in-out infinite; transform-origin: 50% 100%; }
+.butler:nth-child(2n) .bwrap { animation-duration: 3.1s; animation-delay: -.8s; }
+.butler:nth-child(3n) .bwrap { animation-duration: 2.3s; animation-delay: -1.4s; }
+@keyframes idle { 50% { transform: rotate(2deg) translateY(-1px); } }
+
+/* 레어·전설 반짝이 */
+.bwrap { position: relative; display: block; }
+.spark { position: absolute; width: 10px; height: 10px; pointer-events: none; animation: twinkle 1.6s ease-in-out infinite; opacity: 0;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.spark.blue { background: #6fb0ff; }
+.spark.gold { background: #ffd34d; width: 13px; height: 13px; }
+@keyframes twinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 50% { opacity: 1; transform: scale(1) rotate(45deg); } }
+.bwrap.g-rare img { filter: drop-shadow(0 0 4px #8cc4ff); }
+.bwrap.g-legend img { animation: shine 2s ease-in-out infinite; }
+@keyframes shine { 0%, 100% { filter: drop-shadow(0 0 3px #ffd34d); } 50% { filter: drop-shadow(0 0 10px #ffc21a) brightness(1.08); } }
+.cat-stage .spark { width: 16px; height: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cat-body, .butler .bwrap, .spark, .bwrap.g-legend img { animation: none !important; }
+  .spark { opacity: .8; }
+}

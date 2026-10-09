@@ -7,6 +7,7 @@ import { slotsOf, workingAt, nextExpand, expand, canWork, expectedChuru, sendToW
 import { butlerSVG } from "../art.js";
 import { openSheet, closeSheet, toast } from "../ui.js";
 import { fatigueColor } from "./home.js";
+import { play } from "../sound.js";
 
 let app;
 
@@ -116,6 +117,7 @@ function openPicker(place) {
       if (act === "refuse") return toast("너무 지쳐서 출근을 거부했어요. 꾹꾹이로 쉬게 해주세요");
       if (act === "go" && sendToWork(el.dataset.id, place)) {
         closeSheet();
+        play("send");
         toast(`${BUTLER_BY_ID[el.dataset.id].name} 출근!`);
         app.changed();
       }
