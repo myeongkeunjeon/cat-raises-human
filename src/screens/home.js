@@ -4,7 +4,7 @@ import { BUTLER_BY_ID } from "../data/butlers.js";
 import { state, affectionStep, catLevelInfo, housedCount, pet } from "../state.js";
 import { startKneading } from "../kneading.js";
 import { catStage, butlerSVG, CAT_LOOKS } from "../art.js";
-import { roomSVG, isoPct, timeOfDay, WALK, CAT_SPOT } from "../room.js";
+import { roomSVG, isoPct, timeOfDay, WALK, CAT_SPOT, FLOORS } from "../room.js";
 import { fmtLeft } from "./map.js";
 import { now } from "../state.js";
 import { play } from "../sound.js";
@@ -23,6 +23,13 @@ export function fatigueColor(f) {
 // 집사들이 서 있는 바닥 칸 위치 (다시 그려도 유지)
 const pos = {};
 let wanderTimer = 0;
+let floor = 0; // 지금 보고 있는 층
+let floorChanged = false;
+
+// 열린 층에 집사들을 고르게 나눈다
+function floorOf(ids, id, open) {
+  return ids.indexOf(id) % open;
+}
 
 function randomSpot() {
   const r = () => WALK.min + Math.random() * (WALK.max - WALK.min);
@@ -41,7 +48,10 @@ const EMOTES = ["♪", "…", "💭", "✨", "♡"];
 export function render(el, a) {
   app = a;
   const lv = catLevelInfo();
-  const ids = Object.keys(state.butlers).filter((id) => state.butlers[id].housed && state.butlers[id].status !== "working");
+  const open = FLOORS.filter((f) => lv.level >= f.unlock).length;
+  if (floor >= open) floor = 0;
+  const homeIds = Object.keys(state.butlers).filter((id) => state.butlers[id].housed && state.butlers[id].status !== "working");
+  const ids = homeIds.filter((id) => floorOf(homeIds, id, open) === floor);
   for (const id of Object.keys(pos)) if (!ids.includes(id)) delete pos[id];
   const butlers = ids.map((id) => {
     const b = state.butlers[id];
@@ -61,7 +71,7 @@ export function render(el, a) {
   // 수용 인원과 입주 대기 (집이 좁으면 도감에만 등록된 집사)
   const waiting = Object.keys(state.butlers).length - housedCount();
   const working = Object.values(state.butlers).filter((b) => b.status === "working").length;
-  const doneIds = ids.filter((id) => state.butlers[id].status === "done");
+  const doneIds = homeIds.filter((id) => state.butlers[id].status === "done");
   const rent = Math.floor(state.rent || 0);
 
   el.innerHTML = `
@@ -74,8 +84,13 @@ export function render(el, a) {
           ${working ? `<span class="chip">💼 출근 ${working}</span>` : ""}
         </div>
       </div>
-      <div class="diorama ${timeOfDay()}">
-        ${roomSVG(lv.level)}
+      <div class="floors">
+        ${FLOORS.map((f, i) => i < open
+          ? `<button class="floor-btn ${i === floor ? "on" : ""}" data-floor="${i}">${f.icon} ${f.name}</button>`
+          : `<span class="floor-btn locked">🔒 ${f.name} <small>Lv.${f.unlock}</small></span>`).join("")}
+      </div>
+      <div class="diorama ${timeOfDay()} f${floor} ${floorChanged ? "floor-in" : ""}">
+        ${roomSVG(lv.level, timeOfDay(), floor)}
         <div class="actors">
           <button class="cat actor" data-act="cat" style="${placeStyle(CAT_SPOT)}" aria-label="${esc(state.cat.name)} 쓰다듬기">
             <span class="actor-body">${catStage(state.cat.type, lv.level)}</span><span class="shadow"></span>
@@ -86,7 +101,7 @@ export function render(el, a) {
       </div>
       <div class="roster">${rosterHTML()}</div>
       ${waiting && lv.next ? `<p class="hint">호감도 합계 ${lv.sum}/${lv.next.need} → 묘생 Lv.${lv.next.level}이 되면 ${lv.next.capacity}명까지 살 수 있어요</p>` : ""}
-      ${!ids.length ? `<p class="hint">집에 있는 집사가 없어요. 동네에서 퇴근을 기다려 주세요</p>` : ""}
+      ${!homeIds.length ? `<p class="hint">집에 있는 집사가 없어요. 동네에서 퇴근을 기다려 주세요</p>` : ""}
       <div class="home-actions">
         ${doneIds.length > 1 ? `<button class="btn primary" data-act="all">✉️ 모두 정산 (${doneIds.length})</button>` : ""}
         ${rent > 0 ? `<button class="btn rent" data-act="rent">💰 월세 봉투 🐟 ${rent}</button>` : ""}
@@ -113,6 +128,8 @@ export function render(el, a) {
       bounce(btn.querySelector(".actor-body"));
       return setTimeout(() => openButler(btn.dataset.id), 250);
     }
+    const fb = e.target.closest("[data-floor]");
+    if (fb) { floor = Number(fb.dataset.floor); floorChanged = true; play("tap"); render(el, app); floorChanged = false; return; }
     const ros = e.target.closest("[data-ros]");
     if (ros) {
       const st = state.butlers[ros.dataset.ros].status;

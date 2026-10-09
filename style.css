@@ -443,3 +443,13 @@ body { background: radial-gradient(circle at 50% 0, #fff6ea, #f1dfc9); }
 .ros-body .fbar { width: 100%; height: 5px; }
 .st { font-style: normal; font-size: 11px; color: var(--muted); white-space: nowrap; }
 .st.done { color: #b07d00; font-weight: bold; } .st.work { color: #3a78c2; } .st.tired { color: var(--bad); }
+
+.spark.rainbow { width: 15px; height: 15px; background: linear-gradient(135deg, #ff6b6b, #ffd34d, #5cc48a, #4aa3f0, #b072e8); }
+
+.floors { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.floor-btn { flex: none; border: 0; background: #fff; border-radius: 999px; padding: 5px 11px; font-size: 13px; font-family: "Jua", sans-serif; box-shadow: 0 2px 0 #ecdcc6; }
+.floor-btn.on { background: var(--accent); color: #fff; box-shadow: 0 2px 0 #d9612f; }
+.floor-btn.locked { background: #f1e7d8; color: var(--muted); box-shadow: none; }
+.floor-btn small { font-size: 10px; }
+.diorama.floor-in { animation: floorIn .35s ease-out; }
+@keyframes floorIn { from { opacity: 0; transform: translateY(10px); } }

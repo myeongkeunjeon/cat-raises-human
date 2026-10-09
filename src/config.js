@@ -52,5 +52,9 @@ export const CONFIG = {
     { level: 3, need: 250, capacity: 5 },
     { level: 4, need: 450, capacity: 6 },
     { level: 5, need: 700, capacity: 8 },
+    // v0.1 이후 추가 (집사 14종): 층이 늘어난다. 6층 2층 침실, 7층 옥상 정원, 8은 집사 전원 호감도 100
+    { level: 6, need: 950,  capacity: 10, floor: "2층 침실" },
+    { level: 7, need: 1200, capacity: 12, floor: "옥상 정원" },
+    { level: 8, need: 1400, capacity: 14 },
   ],
 };

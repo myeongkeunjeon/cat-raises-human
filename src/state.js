@@ -221,7 +221,8 @@ export function tick() {
   if (lv > state.catLevel) {
     state.catLevel = lv;
     moveInWaiting();
-    events.push("집이 넓어졌다!");
+    const info = CONFIG.catLevels.find((l) => l.level === lv);
+    events.push(info?.floor ? `${info.floor}이 열렸다!` : "집이 넓어졌다!");
   }
 
   state.lastTick = t;

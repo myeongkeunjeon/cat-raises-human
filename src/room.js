@@ -37,7 +37,20 @@ const SKY = {
 export const WALK = { min: 1.7, max: 5.4 };
 export const CAT_SPOT = { gx: 4.7, gy: 4.7 }; // 고양이는 앞쪽 주인공 자리
 
-export function roomSVG(level, tod = timeOfDay()) {
+// 층 정보: 레벨이 오르면 층이 열린다 (config.catLevels의 floor와 같은 순서)
+export const FLOORS = [
+  { name: "1층 거실", icon: "🛋️", unlock: 1 },
+  { name: "2층 침실", icon: "🛏️", unlock: 6 },
+  { name: "옥상 정원", icon: "🌿", unlock: 7 },
+];
+const PALETTES = [
+  { l: ["#f3d9c4", "#efd0b8"], r: ["#f8e4d2", "#f4dcc6"], wood: ["#d9a877", "#c4915f"], base: ["#d9b493", "#e4c2a2"] },
+  { l: ["#d6e4f2", "#cbdcee"], r: ["#e2ecf7", "#d8e5f3"], wood: ["#c9a07a", "#b38a64"], base: ["#a9bfd6", "#b7cbe0"] },
+];
+
+export function roomSVG(level, tod = timeOfDay(), floor = 0) {
+  if (floor === 2) return rooftopSVG(level, tod);
+  const P = PALETTES[floor] || PALETTES[0];
   const [s1, s2] = SKY[tod];
   const night = tod === "night";
   let s = `<svg viewBox="0 0 ${VIEW.w} ${VIEW.h}" class="room-svg" aria-hidden="true">
@@ -45,9 +58,9 @@ export function roomSVG(level, tod = timeOfDay()) {
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient>
     <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff8d8" stop-opacity=".55"/><stop offset="1" stop-color="#fff8d8" stop-opacity="0"/></linearGradient>
     <radialGradient id="lampGlow"><stop offset="0" stop-color="#ffd98a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd98a" stop-opacity="0"/></radialGradient>
-    <pattern id="paperL" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="skewY(26.6)"><rect width="14" height="14" fill="#f3d9c4"/><rect width="7" height="14" fill="#efd0b8"/></pattern>
-    <pattern id="paperR" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="skewY(-26.6)"><rect width="14" height="14" fill="#f8e4d2"/><rect width="7" height="14" fill="#f4dcc6"/></pattern>
-    <pattern id="wood" width="30" height="15" patternUnits="userSpaceOnUse" patternTransform="skewX(-63.4) scale(1 1)"><rect width="30" height="15" fill="#d9a877"/><rect y="7" width="30" height="1.2" fill="#c4915f"/><rect y="14" width="30" height="1.2" fill="#c4915f"/></pattern>
+    <pattern id="paperL" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="skewY(26.6)"><rect width="14" height="14" fill="${P.l[0]}"/><rect width="7" height="14" fill="${P.l[1]}"/></pattern>
+    <pattern id="paperR" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="skewY(-26.6)"><rect width="14" height="14" fill="${P.r[0]}"/><rect width="7" height="14" fill="${P.r[1]}"/></pattern>
+    <pattern id="wood" width="30" height="15" patternUnits="userSpaceOnUse" patternTransform="skewX(-63.4) scale(1 1)"><rect width="30" height="15" fill="${P.wood[0]}"/><rect y="7" width="30" height="1.2" fill="${P.wood[1]}"/><rect y="14" width="30" height="1.2" fill="${P.wood[1]}"/></pattern>
   </defs>`;
 
   // 바닥판 두께 (디오라마 느낌)
@@ -60,8 +73,8 @@ export function roomSVG(level, tod = timeOfDay()) {
   // 벽 (왼쪽·오른쪽) + 아래 판자
   s += poly([[0, N, 0], [0, 0, 0], [0, 0, WALL], [0, N, WALL]], "url(#paperL)");
   s += poly([[0, 0, 0], [N, 0, 0], [N, 0, WALL], [0, 0, WALL]], "url(#paperR)");
-  s += poly([[0, N, 0], [0, 0, 0], [0, 0, 26], [0, N, 26]], "#d9b493");
-  s += poly([[0, 0, 0], [N, 0, 0], [N, 0, 26], [0, 0, 26]], "#e4c2a2");
+  s += poly([[0, N, 0], [0, 0, 0], [0, 0, 26], [0, N, 26]], P.base[0]);
+  s += poly([[0, 0, 0], [N, 0, 0], [N, 0, 26], [0, 0, 26]], P.base[1]);
   s += poly([[0, N, 26], [0, 0, 26], [0, 0, 29], [0, N, 29]], "#c49a74");
   s += poly([[0, 0, 26], [N, 0, 26], [N, 0, 29], [0, 0, 29]], "#cfa680");
   // 바닥
@@ -80,6 +93,8 @@ export function roomSVG(level, tod = timeOfDay()) {
   s += poly([[1.2, 0, 104], [4.3, 0, 104], [4.3, 0, 108], [1.2, 0, 108]], "#b06a5a");
   // 창으로 들어오는 빛
   if (!night) s += poly([[1.75, 0, 50], [3.75, 0, 50], [4.6, 2.6, 0], [2.6, 2.6, 0]], "url(#beam)", 'class="beam"');
+
+  if (floor === 1) return s + bedroom(level, night) + (night ? NIGHT : "") + "</svg>";
 
   // 레벨 1: 박스, 쿠션
   s += box(4.3, 0.2, 1.3, 1.1, 22, ["#e3b77d", "#c99a5c", "#b5864a"]);
@@ -138,6 +153,103 @@ export function roomSVG(level, tod = timeOfDay()) {
   const [bx, by] = iso(5.47, 3.5, 5);
   s += `<ellipse cx="${bx}" cy="${by}" rx="7" ry="3" fill="#c8643c"/>`;
   // 밤에는 방 전체를 조금 어둡게
-  if (night) s += `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".22"/>`;
+  if (night) s += NIGHT;
+  return s + "</svg>";
+}
+
+const NIGHT = `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".22"/>`;
+
+// 2층 침실 (Lv6~): 침대, 옷장, 책상, 빈백. Lv8에 별 조명
+function bedroom(level, night) {
+  let s = "";
+  s += poly([[2.2, 2.2, 0.5], [4.8, 2.2, 0.5], [4.8, 4.8, 0.5], [2.2, 4.8, 0.5]], "#b8d8c8", 'opacity=".85"');
+  // 침대 (왼쪽 벽)
+  s += box(0.15, 1.2, 1.8, 2.4, 14, ["#c9a07a", "#b38a64", "#9c7552"]);
+  s += box(0.2, 1.25, 1.7, 2.3, 10, ["#fdfaf4", "#e8e0d2", "#ddd3c2"], 14);
+  s += box(0.25, 1.3, 1.6, 0.7, 6, ["#ffffff", "#ece6dc", "#e0d8cc"], 24);
+  s += box(0.2, 2.1, 1.7, 1.45, 4, ["#f59ab5", "#e07f9c", "#cc6f8b"], 24);
+  s += box(0.1, 1.15, 0.15, 2.5, 46, ["#b38a64", "#9c7552", "#8a6644"]);
+  // 옷장 (오른쪽 벽)
+  s += box(4.4, 0.15, 1.4, 0.8, 78, ["#e2c9a6", "#cbb08b", "#b89c78"]);
+  const [kx, ky] = iso(5.1, 0.95, 40);
+  s += `<circle cx="${kx - 4}" cy="${ky}" r="2" fill="#8a6644"/><circle cx="${kx + 4}" cy="${ky - 2}" r="2" fill="#8a6644"/>`;
+  // 책상 + 노트북
+  s += box(0.15, 4.2, 0.9, 1.4, 30, ["#c9a07a", "#b38a64", "#9c7552"]);
+  s += box(0.35, 4.6, 0.5, 0.6, 3, ["#5a5f6a", "#3a3f4a", "#2b2f3a"], 30);
+  s += poly([[0.35, 4.6, 33], [0.35, 5.2, 33], [0.35, 5.2, 50], [0.35, 4.6, 50]], "#3a3f4a");
+  s += poly([[0.38, 4.65, 35], [0.38, 5.15, 35], [0.38, 5.15, 48], [0.38, 4.65, 48]], "#9fd3f2");
+  // 빈백
+  const [vx, vy] = iso(4.9, 3.6, 0);
+  s += `<ellipse cx="${vx}" cy="${vy - 8}" rx="24" ry="16" fill="#f5b83d"/><ellipse cx="${vx - 4}" cy="${vy - 14}" rx="14" ry="7" fill="#f8cb66"/>`;
+  if (level >= 7) { // 벽 포스터
+    s += poly([[0, 3.8, 60], [0, 4.9, 60], [0, 4.9, 96], [0, 3.8, 96]], "#7a4cc2");
+    const [qx, qy] = iso(0, 4.35, 78);
+    s += `<path d="M${qx} ${qy - 8} l3 6 l7 1 l-5 5 l1 7 l-6 -3 l-6 3 l1 -7 l-5 -5 l7 -1 z" fill="#ffd34d"/>`;
+  }
+  if (level >= 8) { // 천장 별 조명
+    for (let i = 0; i < 9; i++) {
+      const [x, y] = iso(0.6 + (i % 3) * 1.8, 0.6 + Math.floor(i / 3) * 1.8, 120);
+      s += `<circle cx="${x}" cy="${y}" r="2.5" fill="#fff6b0" class="twinkle" style="animation-delay:${i * 0.2}s"/>`;
+    }
+  }
+  if (night) {
+    const [lx, ly] = iso(0.6, 4.9, 40);
+    s += `<circle cx="${lx}" cy="${ly}" r="60" fill="url(#lampGlow)"/>`;
+  }
+  return s;
+}
+
+// 옥상 정원 (Lv7~): 벽 대신 하늘과 난간, 화단, 파라솔, 꼬마전구. Lv8에 트로피와 무지개 깃발
+function rooftopSVG(level, tod) {
+  const [s1, s2] = SKY[tod];
+  const night = tod === "night";
+  let s = `<svg viewBox="0 0 ${VIEW.w} ${VIEW.h}" class="room-svg" aria-hidden="true">
+  <defs>
+    <linearGradient id="skyTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s1}"/><stop offset="1" stop-color="${s2}"/></linearGradient>
+    <pattern id="deck" width="20" height="10" patternUnits="userSpaceOnUse" patternTransform="skewX(-63.4)"><rect width="20" height="10" fill="#c99b6d"/><rect y="9" width="20" height="1" fill="#a87a4c"/></pattern>
+  </defs>
+  <rect width="${VIEW.w}" height="${VIEW.h}" rx="24" fill="url(#skyTop)" opacity=".9"/>`;
+  if (night) s += [[60, 40], [120, 70], [300, 50], [340, 90], [210, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.5" fill="#fff" class="twinkle"/>`).join("") + `<circle cx="330" cy="40" r="12" fill="#f4efe0"/>`;
+  else s += `<circle cx="330" cy="44" r="14" fill="${tod === "day" ? "#ffe27a" : "#ffb36b"}"/><ellipse cx="90" cy="60" rx="30" ry="10" fill="#fff" opacity=".8"/><ellipse cx="260" cy="90" rx="22" ry="7" fill="#fff" opacity=".7"/>`;
+  s += poly([[0, N, 0], [N, N, 0], [N, N, -16], [0, N, -16]], "#a9a39a");
+  s += poly([[N, 0, 0], [N, N, 0], [N, N, -16], [N, 0, -16]], "#8f897f");
+  s += poly([[0, 0, 0], [N, 0, 0], [N, N, 0], [0, N, 0]], "url(#deck)");
+  // 난간 (뒤쪽 두 변)
+  for (let i = 0; i <= 12; i++) {
+    const g = i * 0.5;
+    const [ax, ay] = iso(0, g, 0), [bx, by] = iso(g, 0, 0);
+    s += `<line x1="${ax}" y1="${ay}" x2="${ax}" y2="${ay - 26}" stroke="#fff" stroke-width="2"/><line x1="${bx}" y1="${by}" x2="${bx}" y2="${by - 26}" stroke="#fff" stroke-width="2"/>`;
+  }
+  s += poly([[0, N, 26], [0, 0, 26], [0, 0, 29], [0, N, 29]], "#fff");
+  s += poly([[0, 0, 26], [N, 0, 26], [N, 0, 29], [0, 0, 29]], "#fff");
+  // 화단
+  s += box(0.15, 0.4, 0.8, 2.6, 16, ["#7a5238", "#6b4a33", "#5f3e29"]);
+  for (let i = 0; i < 5; i++) {
+    const [fx, fy] = iso(0.55, 0.7 + i * 0.5, 22);
+    s += `<circle cx="${fx}" cy="${fy}" r="6" fill="#5cb87a"/><circle cx="${fx}" cy="${fy - 4}" r="3.5" fill="${["#f0647d", "#ffd34d", "#b072e8", "#4aa3f0", "#f08a6c"][i]}"/>`;
+  }
+  s += box(3.2, 0.15, 2.6, 0.7, 14, ["#7a5238", "#6b4a33", "#5f3e29"]);
+  for (let i = 0; i < 5; i++) {
+    const [fx, fy] = iso(3.5 + i * 0.5, 0.5, 20);
+    s += `<path d="M${fx} ${fy} l-4 -14 l4 4 l4 -4 z" fill="#4fa86c"/>`;
+  }
+  // 파라솔 + 테이블
+  const [tx, ty] = iso(2.4, 3.0, 0);
+  s += `<ellipse cx="${tx}" cy="${ty}" rx="22" ry="10" fill="#0002"/><rect x="${tx - 2}" y="${ty - 78}" width="4" height="78" fill="#fff"/>
+    <path d="M${tx - 46} ${ty - 70} Q${tx} ${ty - 104} ${tx + 46} ${ty - 70} Z" fill="#f0647d"/><path d="M${tx - 15} ${ty - 77} Q${tx} ${ty - 104} ${tx + 15} ${ty - 77} Z" fill="#fff"/>
+    <ellipse cx="${tx}" cy="${ty - 26}" rx="20" ry="9" fill="#fff"/><rect x="${tx - 2}" y="${ty - 26}" width="4" height="26" fill="#ddd"/>`;
+  // 꼬마전구
+  for (let i = 0; i <= 12; i++) {
+    const [lx, ly] = iso(i * 0.5, 0, 46 - Math.sin((i / 12) * Math.PI) * 10);
+    s += `<circle cx="${lx}" cy="${ly}" r="2.6" fill="${["#ffd34d", "#f0647d", "#7fd8c0"][i % 3]}" class="twinkle" style="animation-delay:${(i % 4) * 0.3}s"/>`;
+  }
+  if (level >= 8) {
+    const [rx, ry] = iso(5.2, 1.6, 0);
+    s += `<rect x="${rx - 1.5}" y="${ry - 90}" width="3" height="90" fill="#8d9399"/>` +
+      ["#ff6b6b", "#ffb34d", "#ffe27a", "#5cc48a", "#4aa3f0", "#b072e8"].map((c, i) => `<rect x="${rx + 1.5}" y="${ry - 90 + i * 5}" width="34" height="5" fill="${c}"/>`).join("");
+    const [cx, cy] = iso(4.9, 4.9, 0);
+    s += `<rect x="${cx - 10}" y="${cy - 12}" width="20" height="12" fill="#b8860b"/><path d="M${cx - 12} ${cy - 34} L${cx + 12} ${cy - 34} Q${cx + 10} ${cy - 14} ${cx} ${cy - 14} Q${cx - 10} ${cy - 14} ${cx - 12} ${cy - 34} Z" fill="#f2c335"/>`;
+  }
+  if (night) s += `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".18"/>`;
   return s + "</svg>";
 }
