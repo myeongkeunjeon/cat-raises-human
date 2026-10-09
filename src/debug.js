@@ -4,6 +4,7 @@ import { state, tick, addButler, resetSave, statsText, now } from "./state.js";
 import { openSheet, toast, esc } from "./ui.js";
 
 const MIN = 60e3;
+let lastPick = "overtime"; // 메뉴를 다시 그려도 고른 집사 유지
 
 export function initDebug(root, app) {
   if (new URLSearchParams(location.search).get("debug") !== "1") return;
@@ -16,7 +17,7 @@ export function initDebug(root, app) {
 }
 
 function menuHTML() {
-  const opts = BUTLERS.map((b) => `<option value="${b.id}">${b.name}</option>`).join("");
+  const opts = BUTLERS.map((b) => `<option value="${b.id}" ${b.id === lastPick ? "selected" : ""}>${b.name}</option>`).join("");
   return `
     <h3>디버그 메뉴</h3>
     <p class="note">게임 시각: ${new Date(now()).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}
@@ -65,7 +66,7 @@ function openMenu(app) {
       case "f0": all.forEach((b) => (b.fatigue = 0)); break;
       case "f100": all.forEach((b) => (b.fatigue = 100)); break;
       case "give": {
-        const id = document.getElementById("dbg-butler").value;
+        const id = (lastPick = document.getElementById("dbg-butler").value);
         const r = addButler(id);
         toast(r === "duplicate" ? "이미 있는 집사 → 호감도 +20" : r === "new-no-room" ? "집이 좁아요 (도감에만 등록)" : "새 집사!");
         break;
