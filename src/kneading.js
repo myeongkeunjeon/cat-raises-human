@@ -262,6 +262,11 @@ function apply(id, r, accuracy) {
   const affection = gainAffection(id, r.affection + extra);
   const churu = r.churu * (r.id === "perfect" && id === "landlord" ? 2 : 1);
   state.churu += churu;
+  if (def.shareAffection) { // 고양이 카페 사장: 다른 집사들도 기분이 좋아진다
+    for (const [oid, o] of Object.entries(state.butlers)) {
+      if (oid !== id && o.housed && o.status !== "working") gainAffection(oid, def.shareAffection);
+    }
+  }
   let vet = 0;
   if (def.shareFatigue) {
     vet = def.shareFatigue;

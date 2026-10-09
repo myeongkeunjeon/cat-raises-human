@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220">
+<rect x="64" y="92" width="72" height="110" rx="34" fill="#7d8aa8"></rect>
+<polygon points="86,94 100,116 114,94" fill="#f4f1ec"></polygon>
+<polygon points="97,106 103,106 106,142 100,149 94,142" fill="#4a90e2"></polygon>
+<rect x="70" y="140" width="26" height="16" rx="3" fill="#fff" stroke="#c9c2b6"></rect>
+<text x="83" y="152" text-anchor="middle" font-size="10" font-weight="bold" fill="#e05a4f">신입</text>
+<rect x="126" y="150" width="20" height="26" rx="3" fill="#a88763"></rect><rect x="132" y="146" width="8" height="5" rx="2" fill="#8a6c4c"></rect>
+<circle cx="100" cy="64" r="30" fill="#efe3d6"></circle>
+<path d="M70 60 Q70 32 100 32 Q130 32 130 60 Q126 46 108 44 L104 54 L98 44 Q80 44 70 60 Z" fill="#2b2420"></path>
+</svg>

@@ -147,7 +147,7 @@ export function startCheer(id, onDone) {
     let cut = 0, aff = 0;
     if (b.status === "working") {
       const w = b.work;
-      cut = (w.end - w.start) * (C.maxTimeCut + itemBonus("cheerCut") / 100) * ratio;
+      cut = (w.end - w.start) * (C.maxTimeCut + itemBonus("cheerCut") / 100) * ratio * (def.cheerMult || 1);
       w.end = Math.max(now(), w.end - cut);
       w.cheers = (w.cheers || 0) + 1;
       aff = ratio >= 0.5 ? gainAffection(id, Math.round(C.affection * ratio) || 1) : 0;

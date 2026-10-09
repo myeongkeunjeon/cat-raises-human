@@ -44,7 +44,7 @@ export function expectedChuru(id, place, tired) {
   const def = BUTLER_BY_ID[id];
   const b = state.butlers[id];
   let c = CONFIG.workplaces[place].churu;
-  if (def.aptitude === place) c *= 1 + CONFIG.aptitudeBonus;
+  if (def.aptitude === place || def.allAptitude) c *= 1 + CONFIG.aptitudeBonus;
   c *= 1 + affectionStep(b.affection) * CONFIG.affection.incomeBonusPerStep;
   if (tired) c *= 1 - CONFIG.fatigue.tiredPenalty;
   if (state.butlers.churuboss) c *= 1 + BUTLER_BY_ID.churuboss.incomeBonusAll;
@@ -71,7 +71,7 @@ export function sendToWork(id, place, minutesOverride) {
   const tired = b.fatigue >= CONFIG.fatigue.tiredAt; // 출근 시점 피로
   b.fatigue = Math.min(CONFIG.fatigue.max, b.fatigue + workFatigue(id, place));
   b.status = "working";
-  b.work = { place, start: t, end: t + (minutesOverride ?? workMinutes(place)) * 60e3, tired };
+  b.work = { place, start: t, end: t + (minutesOverride ?? workMinutes(place) * (BUTLER_BY_ID[id].timeMult || 1)) * 60e3, tired };
   state.stats.workByPlace[place] = (state.stats.workByPlace[place] || 0) + 1;
   return true;
 }
@@ -96,7 +96,7 @@ function finish(id) {
   if (def.bonusChuruChance && Math.random() < def.bonusChuruChance) bonus = def.bonusChuru;
   if (Math.random() * 100 < itemBonus("lucky")) bonus += 10;
   let pickup = null;
-  if (Math.random() < CONFIG.pickupChance) {
+  if (Math.random() < CONFIG.pickupChance * (def.pickupMult || 1)) {
     const list = itemsAt(place);
     pickup = list[Math.floor(Math.random() * list.length)];
   }
@@ -116,7 +116,8 @@ export function advanceWork(t, lastTick, events) {
       homeMs = t - Math.max(b.work.end, lastTick);
     }
     if (b.housed && homeMs > 0) {
-      b.fatigue = Math.max(0, b.fatigue - (CONFIG.fatigue.recoverPerHour + itemBonus("recover")) * (homeMs / HOUR));
+      const rate = (CONFIG.fatigue.recoverPerHour + itemBonus("recover")) * (BUTLER_BY_ID[id].recoverMult || 1);
+      b.fatigue = Math.max(0, b.fatigue - rate * (homeMs / HOUR));
     }
   }
   // 건물주 월세 적립

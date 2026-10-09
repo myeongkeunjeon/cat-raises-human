@@ -105,7 +105,7 @@ function openPicker(place) {
     const refuse = canWork(id) === "refuse";
     const tired = b.fatigue >= CONFIG.fatigue.tiredAt;
     const tags = [
-      def.aptitude === place ? `<span class="tag good">적성 +${CONFIG.aptitudeBonus * 100}%</span>` : "",
+      def.aptitude === place || def.allAptitude ? `<span class="tag good">적성 +${CONFIG.aptitudeBonus * 100}%</span>` : "",
       refuse ? `<span class="tag bad">출근 거부</span>` : tired ? `<span class="tag warn">지침 −${CONFIG.fatigue.tiredPenalty * 100}%</span>` : "",
     ].join("");
     return `<button class="pick-row" data-act="${refuse ? "refuse" : "go"}" data-id="${id}" ${refuse ? "aria-disabled=true" : ""}>

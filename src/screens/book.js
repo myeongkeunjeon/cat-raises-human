@@ -1,4 +1,4 @@
-// 집사 도감: 8칸 격자 + 상세(냄새 노트) + 주운 물건
+// 집사 도감: 격자 + 상세(냄새 노트) + 주운 물건
 import { CONFIG } from "../config.js";
 import { BUTLERS, BUTLER_BY_ID, GRADES } from "../data/butlers.js";
 import { state, affectionStep } from "../state.js";
@@ -47,7 +47,7 @@ function openDetail(id) {
     const open = i < step && def.smells[i];
     return `<li class="${open ? "" : "locked"}">${open ? def.smells[i] : UNKNOWN_SMELL}</li>`;
   }).join("");
-  const apt = def.aptitude ? CONFIG.workplaces[def.aptitude].name : "없음";
+  const apt = def.allAptitude ? "모든 일터" : def.aptitude ? CONFIG.workplaces[def.aptitude].name : "없음";
   openSheet(`
     <div class="detail">
       <div class="detail-art">${butlerSVG(def)}</div>
