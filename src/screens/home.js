@@ -1,7 +1,8 @@
 // 집: 방 단면, 그릇 속 고양이, 바닥에 선 집사들
 import { CONFIG } from "../config.js";
 import { BUTLER_BY_ID } from "../data/butlers.js";
-import { state, affectionStep, catLevelInfo, housedCount } from "../state.js";
+import { state, affectionStep, catLevelInfo, housedCount, pet } from "../state.js";
+import { startKneading } from "../kneading.js";
 import { catStage, butlerSVG, CAT_LOOKS } from "../art.js";
 import { play } from "../sound.js";
 import { openSheet, closeSheet, toast, esc } from "../ui.js";
@@ -88,6 +89,10 @@ function bounce(el) {
 function poke(el) {
   play("meow");
   bounce(el);
+  heart(el);
+}
+
+function heart(el) {
   const h = document.createElement("span");
   h.className = "float-heart";
   h.textContent = "♥";
@@ -124,12 +129,37 @@ function openSettle(queue) {
 function openButler(id) {
   const def = BUTLER_BY_ID[id];
   const b = state.butlers[id];
+  const petsLeft = CONFIG.affection.petPerDay - b.petsToday;
+  const f = Math.round(b.fatigue);
   openSheet(`
-    <h3>${def.name}</h3>
-    <p>피로 ${Math.round(b.fatigue)} / ${CONFIG.fatigue.max} · 호감도 ${b.affection} (${affectionStep(b.affection)}단계)</p>
+    <div class="detail">
+      <div class="detail-art">${butlerSVG(def)}</div>
+      <div>
+        <h3>${def.name}</h3>
+        <p>피로 ${f} / ${CONFIG.fatigue.max}</p>
+        <div class="fbar wide"><i style="width:${f}%;background:${fatigueColor(f)}"></i></div>
+        <p>호감도 ${b.affection} (${affectionStep(b.affection)}단계)</p>
+      </div>
+    </div>
     <div class="row">
-      <button class="btn" data-act="knead">꾹꾹이</button>
-      <button class="btn" data-act="pet">쓰다듬기</button>
-    </div>`,
-    () => toast("꾹꾹이·쓰다듬기는 다음 단계에서 열려요"));
+      <button class="btn primary" data-act="knead">🐾 꾹꾹이</button>
+      <button class="btn" data-act="pet" ${petsLeft > 0 ? "" : "disabled"}>쓰다듬기 (${petsLeft}/${CONFIG.affection.petPerDay})</button>
+    </div>
+    <p class="note">${f >= CONFIG.fatigue.tiredAt ? "많이 지쳐 보여요. 꾹꾹이로 풀어 주세요" : "꾹꾹이를 받으면 피로가 풀리고 호감도가 올라요"}</p>`,
+    (act) => {
+      if (act === "knead") {
+        closeSheet();
+        startKneading(id, () => app.changed());
+      }
+      if (act === "pet") {
+        const n = pet(id);
+        if (n === null) return;
+        play("meow");
+        closeSheet();
+        app.changed();
+        toast(`${def.name} 호감도 +${n}`);
+        const btn = document.querySelector(`.butler[data-id="${id}"]`);
+        if (btn) { bounce(btn); heart(btn); }
+      }
+    });
 }

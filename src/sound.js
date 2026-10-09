@@ -54,6 +54,12 @@ const SOUNDS = {
   pop:     () => tone([400, 900], 0.08, { vol: 0.1 }),
   rare:    () => [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.25, { vol: 0.06, delay: i * 0.06 })),
   legend:  () => [784, 988, 1175, 1568, 1976, 2349].forEach((f, i) => tone(f, 0.35, { type: "triangle", vol: 0.07, delay: i * 0.07 })),
+  tick:    () => tone(1400, 0.03, { type: "square", vol: 0.025 }),
+  kneadL:  () => tone([260, 180], 0.09, { vol: 0.22 }),
+  kneadR:  () => tone([300, 210], 0.09, { vol: 0.22 }),
+  miss:    () => tone([200, 140], 0.12, { type: "triangle", vol: 0.06 }),
+  purr:    () => { for (let i = 0; i < 6; i++) tone(70, 0.08, { type: "sawtooth", vol: 0.05, delay: i * 0.1 }); },
+  melt:    () => tone([600, 150], 0.7, { vol: 0.12, vibrato: 25 }),
   levelup: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i === 3 ? 0.5 : 0.15, { type: "square", vol: 0.05, delay: i * 0.12 })),
 };
 

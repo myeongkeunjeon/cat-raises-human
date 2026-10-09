@@ -1,10 +1,11 @@
 // 모든 밸런스 숫자. SPEC.md 7장 / 엑셀 '설정값' 시트와 같은 값.
 // 바꿀 때는 엑셀에서 먼저 확인하고 이 파일을 고친다.
+// v0.1 이후 변경: 근무 시간 단축(접속 중에도 정산을 여러 번 보도록), 응원 가기 추가. 엑셀은 아직 옛 값.
 export const CONFIG = {
   workplaces: {
-    store:        { name: "편의점", minutes: 30,  churu: 30,  fatigue: 15 },
-    office:       { name: "회사",   minutes: 120, churu: 100, fatigue: 30 },
-    construction: { name: "공사장", minutes: 480, churu: 300, fatigue: 60 },
+    store:        { name: "편의점", minutes: 3,   churu: 12,  fatigue: 10 }, // 옛 값: 30분 / 30 / 15
+    office:       { name: "회사",   minutes: 20,  churu: 50,  fatigue: 25 }, // 옛 값: 120분 / 100 / 30
+    construction: { name: "공사장", minutes: 120, churu: 200, fatigue: 50 }, // 옛 값: 480분 / 300 / 60
   },
   slots: { start: 1, expand: [ { to: 2, cost: 800 }, { to: 3, cost: 2000 } ] },
 
@@ -30,6 +31,9 @@ export const CONFIG = {
     legendPity: 50,
     freeTicketsPerDay: 1,
   },
+
+  // 응원 가기: 근무 중인 집사에게 간식 배달 미니게임 → 근무 시간 단축 + 호감도
+  cheer: { perShift: 3, snacks: 8, maxTimeCut: 0.15, affection: 2 },
 
   startChuru: 100,
   dayResetHourKST: 5,

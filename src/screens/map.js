@@ -8,6 +8,7 @@ import { butlerSVG } from "../art.js";
 import { openSheet, closeSheet, toast } from "../ui.js";
 import { fatigueColor } from "./home.js";
 import { play } from "../sound.js";
+import { startCheer, cheersLeft } from "../cheer.js";
 
 let app;
 
@@ -37,7 +38,8 @@ export function render(el, a) {
     const ex = nextExpand(key);
     const scenes = ids.map((id) => {
       const b = state.butlers[id];
-      return `<div class="scene scene-${key}">
+      const left = cheersLeft(id);
+      return `<button class="scene scene-${key}" data-act="cheer" data-id="${id}" ${left > 0 ? "" : "aria-disabled=true"}>
         ${PROPS[key]}
         <div class="scene-butler">${butlerSVG(BUTLER_BY_ID[id])}</div>
         <div class="scene-text">
@@ -45,7 +47,8 @@ export function render(el, a) {
           <span class="scene-line" data-lines="${key}"></span>
           <span class="countdown">⏱ <span data-end="${b.work.end}"></span></span>
         </div>
-      </div>`;
+        <span class="cheer-badge">${left > 0 ? `🐾 응원 가기 ${left}` : "응원 끝"}</span>
+      </button>`;
     }).join("");
     return `<div class="card place" data-place="${key}">
       <div class="place-head">
@@ -71,6 +74,11 @@ export function render(el, a) {
     if (!btn) return;
     const place = btn.closest("[data-place]").dataset.place;
     if (btn.dataset.act === "send") openPicker(place);
+    if (btn.dataset.act === "cheer") {
+      if (cheersLeft(btn.dataset.id) <= 0) return toast("이번 근무에는 응원을 다 했어요");
+      play("tap");
+      startCheer(btn.dataset.id, () => app.changed());
+    }
     if (btn.dataset.act === "expand" && expand(place)) { toast("자리가 늘었어요!"); app.changed(); }
   };
   refreshLive(el);

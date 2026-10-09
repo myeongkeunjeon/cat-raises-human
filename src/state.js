@@ -148,6 +148,25 @@ export function addButler(id) {
   return room ? "new" : "new-no-room";
 }
 
+// 호감도 획득 (집사별 배율 적용). pet: 쓰다듬기
+export function gainAffection(id, amount, { pet = false } = {}) {
+  const def = BUTLER_BY_ID[id];
+  const b = state.butlers[id];
+  let n = amount * (def.affectionMult || 1) * (pet ? def.petMult || 1 : 1);
+  n = Math.max(amount > 0 ? 1 : 0, Math.round(n));
+  const before = b.affection;
+  b.affection = Math.min(CONFIG.affection.max, b.affection + n);
+  return b.affection - before;
+}
+
+// 쓰다듬기: 하루 3회
+export function pet(id) {
+  const b = state.butlers[id];
+  if (b.petsToday >= CONFIG.affection.petPerDay) return null;
+  b.petsToday++;
+  return gainAffection(id, CONFIG.affection.petAmount, { pet: true });
+}
+
 // 수용 인원이 늘었으면 대기 중인 집사 자동 입주
 function moveInWaiting() {
   const cap = catLevelInfo().capacity;
