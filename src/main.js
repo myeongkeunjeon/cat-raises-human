@@ -2,6 +2,7 @@
 import { load, save, tick, state, catLevelInfo, recordVisit, addPlaySeconds } from "./state.js";
 import { initUI, toast } from "./ui.js";
 import { initDebug } from "./debug.js";
+import { showCatSelect } from "./screens/catselect.js";
 import * as home from "./screens/home.js";
 import * as map from "./screens/map.js";
 import * as office from "./screens/office.js";
@@ -46,8 +47,14 @@ function start() {
     if (tab && tab !== current) { current = tab; renderAll(); }
   });
 
-  initDebug(root, app);
+  initDebug(document.querySelector(".topbar"), app);
   renderAll();
+  if (!state.cat.type) {
+    showCatSelect(root, (type, name) => {
+      state.cat = { type, name };
+      app.changed();
+    });
+  }
 
   // 1초마다 시간 진행 + 상단 표시 갱신, 10초마다 저장
   let secs = 0;

@@ -28,7 +28,7 @@ function freshState() {
   return {
     version: 1,
     createdAt: t,
-    cat: { type: "cheese", name: "냥이" },
+    cat: { type: null, name: "냥이" }, // type이 비어 있으면 첫 실행 → 고양이 고르기
     churu: CONFIG.startChuru,
     freeTickets: CONFIG.gacha.freeTicketsPerDay,
     slots: CONFIG.slots.start,
