@@ -142,3 +142,52 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .cat-pick.on { background: #fff; border-color: var(--ink); }
 .cat-pick .cat-svg { width: 120px; }
 .catselect input { height: 52px; padding: 0 16px; border-radius: 14px; border: 2px solid #d6d0c6; background: #fff; font: inherit; font-size: 17px; user-select: text; -webkit-user-select: text; }
+
+/* 근무 / 정산 */
+.butler { position: relative; }
+.envelope { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); font-size: 22px; animation: bob 1.2s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translate(-50%, -5px); } }
+.home-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 280px; margin-top: 10px; }
+.btn.rent { border-color: var(--legend); }
+.settle { text-align: center; }
+.settle-art { width: 110px; margin: 0 auto; }
+.settle-churu { font-size: 26px; font-weight: bold; margin: 4px 0 10px; }
+.settle-churu small { font-size: 13px; font-weight: normal; color: var(--muted); }
+.journal { margin: 0 0 12px; padding: 14px; background: var(--card); border-radius: 12px; font-size: 16px; line-height: 1.5; }
+.pickup { font-size: 14px; }
+
+.place-head { display: flex; justify-content: space-between; align-items: baseline; }
+.place .row { margin-bottom: 0; }
+.tag { font-size: 11px; padding: 1px 6px; border-radius: 6px; margin-left: 4px; white-space: nowrap; }
+.tag.good { background: #d8f0dd; color: #23703a; }
+.tag.warn { background: #fbefc4; color: #7a5a00; }
+.tag.bad { background: #f8d6d2; color: #9b2c22; }
+.pick-list { display: flex; flex-direction: column; gap: 8px; }
+.pick-row { display: flex; align-items: center; gap: 10px; text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 6px 12px 6px 4px; min-height: 64px; }
+.pick-row[aria-disabled] { opacity: .5; filter: grayscale(1); }
+.pick-art { width: 56px; flex: none; }
+.pick-body { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: 14px; }
+.pick-body small { color: var(--muted); font-size: 12px; }
+.fbar.wide { width: 100%; max-width: 160px; }
+.pick-churu { font-weight: bold; white-space: nowrap; }
+
+/* 일하는 모습 (가벼운 2D 장면) */
+.scene { position: relative; display: flex; align-items: flex-end; gap: 8px; margin-top: 10px; padding: 8px 10px 0; height: 96px;
+  border-radius: 12px; overflow: hidden; border-bottom: 3px solid #b9a68d; }
+.scene-store { background: #e6f3ea; }
+.scene-office { background: #e7ecf4; }
+.scene-construction { background: #f6ecd9; }
+.scene .prop { position: absolute; right: 8px; bottom: 0; width: 120px; }
+.scene-butler { width: 72px; flex: none; margin-bottom: -6px; transform-origin: 50% 100%; }
+.scene-store .scene-butler { animation: sway 1.6s ease-in-out infinite; }
+.scene-office .scene-butler { animation: type 0.5s ease-in-out infinite; }
+.scene-construction .scene-butler { animation: carry 2.4s ease-in-out infinite; }
+@keyframes sway { 50% { transform: translateX(10px) rotate(2deg); } }
+@keyframes type { 50% { transform: translateY(2px) scaleY(.98); } }
+@keyframes carry { 0%, 100% { transform: translateX(0); } 45% { transform: translateX(46px) translateY(-3px); } 50% { transform: translateX(46px) scaleX(-1); } 95% { transform: translateX(0) scaleX(-1); } }
+.scene-text { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 2px; font-size: 13px; align-self: flex-start;
+  background: #fffaf2dd; border-radius: 10px; padding: 6px 10px; }
+.scene-line { color: var(--muted); }
+.countdown { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .scene-butler, .envelope { animation: none !important; } }
+.pick-name { display: flex; align-items: center; flex-wrap: wrap; gap: 2px; }

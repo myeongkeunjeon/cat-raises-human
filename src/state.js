@@ -1,6 +1,7 @@
 // 저장/불러오기, 시간 계산(오프라인 포함), 하루 경계
 import { CONFIG } from "./config.js";
 import { BUTLER_BY_ID } from "./data/butlers.js";
+import { advanceWork } from "./work.js";
 
 const SAVE_KEY = "catRaisesHuman.save.v1";
 const HOUR = 3600e3;
@@ -31,7 +32,8 @@ function freshState() {
     cat: { type: null, name: "냥이" }, // type이 비어 있으면 첫 실행 → 고양이 고르기
     churu: CONFIG.startChuru,
     freeTickets: CONFIG.gacha.freeTicketsPerDay,
-    slots: CONFIG.slots.start,
+    slots: Object.fromEntries(Object.keys(CONFIG.workplaces).map((k) => [k, CONFIG.slots.start])), // 일터별 자리 수
+    rent: 0,         // 건물주 월세 적립
     gacha: { pulls: 0, freePulls: 0, sinceLegend: 0 },
     butlers: {},     // id → { affection, fatigue, status, housed, petsToday, work }
     pickups: [],     // 주운 물건 이름 목록
@@ -75,6 +77,10 @@ export function load() {
     console.warn("불러오기 실패, 새로 시작합니다", e);
   }
   state = saved && saved.version === 1 ? merge(freshState(), saved) : freshState();
+  if (typeof state.slots === "number") { // v1 초기 저장본: 일터 공통 숫자 → 일터별
+    const n = state.slots;
+    state.slots = Object.fromEntries(Object.keys(CONFIG.workplaces).map((k) => [k, n]));
+  }
   if (!saved) {
     // 튜토리얼(5단계)이 생기기 전까지 임시로 첫 집사를 준다
     addButler("overtime");
@@ -158,12 +164,8 @@ export function tick() {
   const t = now();
   const dt = Math.max(0, t - state.lastTick); // 시계를 뒤로 돌리면 0으로 처리
 
-  // 피로 자연 회복: 집에 있는(근무 중이 아닌) 집사
-  const recover = CONFIG.fatigue.recoverPerHour * (dt / HOUR);
-  for (const id of ownedIds()) {
-    const b = state.butlers[id];
-    if (b.housed && b.status !== "working") b.fatigue = Math.max(0, b.fatigue - recover);
-  }
+  // 근무 종료 처리 + 집에 있는 집사 피로 자연 회복 + 월세
+  advanceWork(state.lastTick + dt, state.lastTick, events);
 
   // 하루 경계 (한국 시간 새벽 5시)
   const dk = dayKey(t);

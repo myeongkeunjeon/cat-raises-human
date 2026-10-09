@@ -30,7 +30,7 @@ function renderTopbar() {
 
 function renderAll() {
   renderTopbar();
-  SCREENS[current].render(document.getElementById("screen"));
+  SCREENS[current].render(document.getElementById("screen"), app);
   document.querySelectorAll(".tabbar button").forEach((b) => b.classList.toggle("on", b.dataset.tab === current));
 }
 
@@ -64,7 +64,10 @@ function start() {
     events.forEach(toast);
     addPlaySeconds(1);
     if (events.length) app.changed();
-    else renderTopbar();
+    else {
+      renderTopbar();
+      if (current === "map") map.refreshLive(document.getElementById("screen"));
+    }
     if (++secs % 10 === 0 && saveEnabled) save();
   }, 1000);
 
