@@ -104,7 +104,7 @@ export function startKneading(id, onDone) {
     nowSec = () => (performance.now() - start) / 1000;
   }
 
-  const score = () => notes.reduce((s, n) => s + (n.s ? K.points[n.s] : 0), 0);
+  const score = () => notes.reduce((s, n) => s + (K.points[n.s] || 0), 0); // 놓침(miss)은 0점
 
   function judge(kind) {
     count[kind]++;
@@ -189,7 +189,7 @@ export function startKneading(id, onDone) {
     cancelAnimationFrame(raf);
     stopMusic();
     const accuracy = slept ? 1 : score() / total;
-    const r = slept ? K.results[0] : K.results.find((x) => accuracy >= x.minAccuracy);
+    const r = slept ? K.results[0] : K.results.find((x) => accuracy >= x.minAccuracy) || K.results[K.results.length - 1];
     const res = apply(id, r, accuracy);
     showResult(r, accuracy, res, slept);
   }
