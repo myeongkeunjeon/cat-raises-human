@@ -185,13 +185,13 @@ function itemsSVG(deco, floor, night, tod, skipRug = false) {
   return s;
 }
 
-function floorSVG(fl) {
+function floorSVG(fl, woodId = "wood") {
   if (fl.kind === "tile") {
     let s = "";
     for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) s += poly([[x, y, 0], [x + 1, y, 0], [x + 1, y + 1, 0], [x, y + 1, 0]], (x + y) % 2 ? fl.c[1] : fl.c[0]);
     return s;
   }
-  let s = poly([[0, 0, 0], [N, 0, 0], [N, N, 0], [0, N, 0]], fl.kind === "plank" ? "url(#wood)" : fl.c[0]);
+  let s = poly([[0, 0, 0], [N, 0, 0], [N, N, 0], [0, N, 0]], fl.kind === "plank" ? `url(#${woodId})` : fl.c[0]);
   if (fl.kind === "grass") for (let i = 0; i < N * 6; i++) s += circ(((i * 37) % (N * 10)) / 10 + 0.1, ((i * 53) % (N * 10)) / 10 + 0.1, 0, 1.6, i % 2 ? fl.c[1] : "#a6dc8f");
   if (fl.kind === "marble") for (let i = 0; i < N; i++) {
     const [x1, y1] = iso(i + 0.2, 0.3 + (i % 3), 0), [x2, y2] = iso(i + 0.9, 1.5 + (i % 3), 0);
@@ -445,5 +445,47 @@ function rooftopSVG(level, tod, deco = {}) {
   }
   s += itemsSVG(deco, 2, night, tod, true);
   if (night) s += `<rect width="${VIEW.w}" height="${VIEW.h}" fill="#1b2440" opacity=".18"/>`;
+  return s + "</svg>";
+}
+
+
+// ---------- 상점 썸네일: 작은 방(3칸) 안에 그 아이템만 그린다 ----------
+// 페이지에 썸네일이 여러 개라 무늬 id가 겹치지 않게 아이템 id를 붙인다
+const THUMB_POS = {
+  plant: { x: 1.15, y: 1.15 }, tank: { x: 1.2, y: 1.25 }, lamp: { x: 1.5, y: 1.5 }, tower: { x: 1.05, y: 1.05 },
+  rug: { a: 0.35, b: 2.65 }, bed: { x: 0.85, y: 0.95 }, cabinet: { x: 1.0, y: 0.15 },
+};
+export function itemThumb(d) {
+  setLayout(3);
+  P = THUMB_POS;
+  const u = d.id;
+  const neutralWall = { kind: "stripe", c: ["#f6ebdd", "#f1e2cf", "#faf1e6", "#f5e8d8"] };
+  const neutralFloor = { kind: "plank", c: ["#e8d2b6", "#d9bf9e", "#c9a983", "#b8956d"] };
+  const wallD = d.slot === "wall" ? d : neutralWall;
+  const fl = d.slot === "floor" ? d : neutralFloor;
+  // 벽에 붙는 것은 방 전체, 바닥 가구는 가까이 확대
+  const wide = ["wall", "floor", "curtain", "shelf", "art", "lights", "ceiling", "cabinet", "sofa"].includes(d.slot);
+  const vb = wide ? "96 26 208 262" : d.slot === "rug" ? "106 120 188 150" : "128 96 144 176";
+  let s = `<svg viewBox="${vb}" class="thumb-svg" aria-hidden="true"><defs>
+    ${wallPattern(`pl_${u}`, wallD, 26.6, "L")}${wallPattern(`pr_${u}`, wallD, -26.6, "R")}
+    <pattern id="wd_${u}" width="30" height="15" patternUnits="userSpaceOnUse" patternTransform="skewX(-63.4)"><rect width="30" height="15" fill="${fl.c[0]}"/><rect y="7" width="30" height="1.2" fill="${fl.c[1]}"/><rect y="14" width="30" height="1.2" fill="${fl.c[1]}"/></pattern>
+    <linearGradient id="sky_${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7ec4f0"/><stop offset="1" stop-color="#cdeafb"/></linearGradient>
+  </defs>`;
+  s += poly([[0, N, 0], [N, N, 0], [N, N, -16], [0, N, -16]], fl.c[2]);
+  s += poly([[N, 0, 0], [N, N, 0], [N, N, -16], [N, 0, -16]], fl.c[3]);
+  s += poly([[0, N, 0], [0, 0, 0], [0, 0, WALL], [0, N, WALL]], `url(#pl_${u})`);
+  s += poly([[0, 0, 0], [N, 0, 0], [N, 0, WALL], [0, 0, WALL]], `url(#pr_${u})`);
+  s += floorSVG(fl, `wd_${u}`);
+  if (d.slot === "curtain") {
+    const w0 = N / 2 - 1.0, w1 = N / 2 + 1.0;
+    s += poly([[w0, 0, 46], [w1, 0, 46], [w1, 0, 98], [w0, 0, 98]], `url(#sky_${u})`, 'stroke="#c49a74" stroke-width="3"');
+    s += curtainSVG(d, w0, w1);
+  }
+  const draw = {
+    rug: () => rugSVG(d), bed: () => bedSVG(d), plant: () => plantSVG(d), shelf: () => shelfSVG(d), art: () => artSVG(d),
+    sofa: () => sofaSVG(d), lamp: () => lampSVG(d, false), tower: () => towerSVG(d), tank: () => tankSVG(), lights: () => lightsSVG(),
+    ceiling: () => chandelierSVG(), cabinet: () => cabinetSVG(),
+  }[d.slot];
+  if (draw) s += draw();
   return s + "</svg>";
 }

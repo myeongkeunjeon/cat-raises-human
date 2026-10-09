@@ -2,7 +2,7 @@
 // 누르면 내 방에 놓아 본 미리보기 → 구매 / 장착 / 빼기
 import { DECO, DECO_BY_ID, THEMES, SLOTS, STARTER } from "../data/deco.js";
 import { state, catLevelInfo, buyDeco, equipDeco, decoFloorOf, floorOpen } from "../state.js";
-import { roomSVG, setLayout, timeOfDay, FLOORS, slotAllowed } from "../room.js";
+import { roomSVG, setLayout, timeOfDay, FLOORS, slotAllowed, itemThumb } from "../room.js";
 import { play } from "../sound.js";
 import { openSheet, closeSheet, toast, esc } from "../ui.js";
 
@@ -31,7 +31,7 @@ export function render(el, a) {
         const have = owned.includes(d.id), at = decoFloorOf(d.id), on = at >= 0, locked = lv < d.lv;
         const tag = on ? `<span class="stag on">${FLOORS[at].name.split(" ")[0]}에 있음</span>` : have ? `<span class="stag">보유</span>` : locked ? `<span class="stag lock">🔒 Lv.${d.lv}</span>` : `<span class="stag price">🪙 ${d.price}</span>`;
         return `<button class="shop-card ${locked ? "locked" : ""} ${on ? "equipped" : ""}" data-id="${d.id}">
-          <span class="swatch" style="${swatchStyle(d)}">${SLOT_ICON[d.slot]}</span>
+          <span class="thumb">${itemThumb(d)}<i class="slot-ic">${SLOT_ICON[d.slot]}</i></span>
           <b>${esc(d.name)}</b>
           <small>${THEMES[d.theme].icon} ${SLOTS[d.slot]}</small>
           ${tag}
@@ -44,11 +44,6 @@ export function render(el, a) {
     const c = e.target.closest("[data-id]");
     if (c) openItem(c.dataset.id);
   };
-}
-
-function swatchStyle(d) {
-  const c = d.c?.length ? d.c : ["#f3ece0", "#e6d8c4"];
-  return `background: linear-gradient(135deg, ${c[0]} 50%, ${c[1] || c[0]} 50%)`;
 }
 
 // 미리보기: 고른 층에 이 아이템을 놓아 본 모습. 놓을 층을 고를 수 있다
