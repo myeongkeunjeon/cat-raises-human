@@ -241,7 +241,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 
 /* ---------- 꾹꾹이 ---------- */
 .knead, .cheer { position: absolute; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; overflow: hidden;
-  padding: max(14px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); touch-action: manipulation; }
+  padding: max(14px, env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom)); touch-action: none; -webkit-touch-callout: none; }
 .knead-top { display: flex; justify-content: space-between; font-size: 16px; }
 .knead-time { font-variant-numeric: tabular-nums; font-weight: bold; }
 .knead-combo { height: 26px; text-align: center; font-weight: bold; color: var(--accent); font-size: 18px; }
@@ -291,7 +291,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 @keyframes comboPop { from { transform: scale(1.3); } }
 .ready { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 34px; font-weight: 900; pointer-events: none; }
 .pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: none; margin-top: 8px; }
-.pad { height: 84px; border-radius: 18px; border: 0; font-size: 30px; color: #fff; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.pad { height: 84px; border-radius: 18px; border: 0; font-size: 30px; color: #fff; -webkit-user-select: none; user-select: none; touch-action: none; }
 .pad[data-lane="0"] { background: #f0647d; } .pad[data-lane="1"] { background: #4aa3f0; } .pad[data-lane="2"] { background: #f5b83d; } .pad[data-lane="3"] { background: #5cc48a; }
 .pad.hit { transform: scale(.93); filter: brightness(1.2); }
 .knead-quit { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
@@ -315,7 +315,7 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .cheer-badge { position: absolute; right: 8px; top: 8px; z-index: 1; font-size: 12px; background: var(--accent); color: #fff; border-radius: 999px; padding: 3px 8px; }
 .scene[aria-disabled] .cheer-badge { background: #bbb; }
 .cheer-head h3 { margin: 4px 0 2px; }
-.cheer-field { position: relative; flex: 1; margin: 12px 0; border-radius: 20px; overflow: hidden; border-bottom: 4px solid #b9a68d; touch-action: manipulation; }
+.cheer-field { position: relative; flex: 1; margin: 12px 0; border-radius: 20px; overflow: hidden; border-bottom: 4px solid #b9a68d; touch-action: none; }
 .cheer-butler { position: absolute; bottom: -4px; left: 50%; width: 120px; transform: translateX(-50%); transform-origin: 50% 100%; }
 .cheer-butler.happy { animation: cheerHop .4s ease-out; }
 @keyframes cheerHop { 40% { transform: translateX(-50%) translateY(-14px); } }

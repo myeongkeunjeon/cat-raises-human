@@ -9,7 +9,7 @@ import { BACKDROPS } from "./data/backdrops.js";
 import { state, now, gainAffection, itemBonus } from "./state.js";
 import { butlerSVG, catSVG } from "./art.js";
 import { play } from "./sound.js";
-import { esc } from "./ui.js";
+import { esc, lockGestures } from "./ui.js";
 
 export function cheersLeft(id) {
   const w = state.butlers[id].work;
@@ -43,6 +43,7 @@ export function startCheer(id, onDone) {
     </div>
     <div class="cheer-score">막음 <b class="s-block">0</b> · 받음 <b class="s-recv">0</b></div>`;
   document.getElementById("app").append(el);
+  lockGestures(el);
   const $ = (s) => el.querySelector(s);
   const field = $(".cheer-field"), butler = $(".cheer-butler"), cat = $(".cheer-cat");
   const t0 = performance.now() + 900;

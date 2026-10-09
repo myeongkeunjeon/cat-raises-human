@@ -36,3 +36,12 @@ export function toast(msg) {
 export function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
+
+// 미니게임 화면: 두 손가락이 동시에 닿아도 확대·스크롤 제스처로 바뀌지 않게 막는다 (iOS는 user-scalable=no를 무시함)
+export function lockGestures(el) {
+  const stop = (e) => { if (!e.target.closest("[data-act]")) e.preventDefault(); };
+  el.addEventListener("touchstart", stop, { passive: false });
+  el.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
+  el.addEventListener("gesturestart", (e) => e.preventDefault()); // Safari 핀치
+  el.addEventListener("dblclick", (e) => e.preventDefault());
+}

@@ -6,7 +6,7 @@ import { BUTLER_BY_ID, KNEAD_THEMES } from "./data/butlers.js";
 import { state, gainAffection, itemBonus } from "./state.js";
 import { butlerSVG, catSVG } from "./art.js";
 import { play, audioClock, beatTrack } from "./sound.js";
-import { esc } from "./ui.js";
+import { esc, lockGestures } from "./ui.js";
 
 const RESULT_NAME = { perfect: "완벽", good: "잘함", okay: "적당히" };
 const DIRS = ["왼쪽", "아래", "위", "오른쪽"];
@@ -63,7 +63,7 @@ export function startKneading(id, onDone) {
   el.className = "knead";
   el.innerHTML = `
     <div class="knead-top">
-      <button class="knead-quit">✕ 그만하기</button>
+      <button class="knead-quit" data-act="quit">✕ 그만하기</button>
       <span class="knead-name">${def.name}<small>♪ ${theme.title || "꾹꾹이"}</small></span>
       <span class="knead-time">${K.seconds}</span>
     </div>
@@ -85,6 +85,7 @@ export function startKneading(id, onDone) {
       ${DIRS.map((d, i) => `<button class="pad" data-lane="${i}" aria-label="${d}"><span class="r${i}">${PAW}</span></button>`).join("")}
     </div>`;
   document.getElementById("app").append(el);
+  lockGestures(el);
 
   const $ = (s) => el.querySelector(s);
   const lanes = el.querySelectorAll(".lane");
