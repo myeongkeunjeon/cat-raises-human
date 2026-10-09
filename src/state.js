@@ -2,6 +2,7 @@
 import { CONFIG } from "./config.js";
 import { BUTLER_BY_ID } from "./data/butlers.js";
 import { advanceWork } from "./work.js";
+import { ITEMS, itemValue } from "./data/items.js";
 
 const SAVE_KEY = "catRaisesHuman.save.v1";
 const HOUR = 3600e3;
@@ -36,7 +37,7 @@ function freshState() {
     rent: 0,         // 건물주 월세 적립
     gacha: { pulls: 0, freePulls: 0, sinceLegend: 0 },
     butlers: {},     // id → { affection, fatigue, status, housed, petsToday, work }
-    pickups: [],     // 주운 물건 이름 목록
+    pickups: {},     // 주운 물건 이름 → 개수 (효과는 data/items.js)
     recentJournals: {},
     dayKey: dayKey(t),
     lastTick: t,
@@ -78,6 +79,11 @@ export function load() {
     console.warn("불러오기 실패, 새로 시작합니다", e);
   }
   state = saved && saved.version === 1 ? merge(freshState(), saved) : freshState();
+  if (Array.isArray(state.pickups)) { // 옛 저장본: 이름 목록 → 개수
+    const counts = {};
+    for (const n of state.pickups) counts[n] = (counts[n] || 0) + 1;
+    state.pickups = counts;
+  }
   if (typeof state.slots === "number") { // v1 초기 저장본: 일터 공통 숫자 → 일터별
     const n = state.slots;
     state.slots = Object.fromEntries(Object.keys(CONFIG.workplaces).map((k) => [k, n]));
@@ -146,6 +152,18 @@ export function addButler(id) {
     work: null,
   };
   return room ? "new" : "new-no-room";
+}
+
+// 주운 물건 효과 합계. place를 주면 그 일터에 걸린 효과만
+export function itemBonus(type, place = null) {
+  let sum = 0;
+  for (const [name, n] of Object.entries(state.pickups || {})) {
+    const item = ITEMS[name];
+    if (!item || !n || item.effect.type !== type) continue;
+    if (item.effect.place && item.effect.place !== place) continue;
+    sum += itemValue(name, n);
+  }
+  return sum;
 }
 
 // 호감도 획득 (집사별 배율 적용). pet: 쓰다듬기

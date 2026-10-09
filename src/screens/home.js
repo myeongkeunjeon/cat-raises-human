@@ -7,6 +7,7 @@ import { catStage, butlerSVG, CAT_LOOKS } from "../art.js";
 import { play } from "../sound.js";
 import { openSheet, closeSheet, toast, esc } from "../ui.js";
 import { settle, collectRent } from "../work.js";
+import { itemDesc, ITEM_MAX_LEVEL } from "../data/items.js";
 
 let app;
 
@@ -115,9 +116,9 @@ function openSettle(queue) {
       <p class="note">${CONFIG.workplaces[r.place].name} 근무를 마치고 돌아왔어요</p>
       <div class="settle-art">${butlerSVG(def)}</div>
       <h3>${def.name}</h3>
-      <div class="settle-churu">🐟 +${r.churu}${r.bonus ? ` <small>(공장장 덤 +${r.bonus})</small>` : ""}</div>
+      <div class="settle-churu">🐟 +${r.churu}${r.bonus ? ` <small>(덤 +${r.bonus})</small>` : ""}</div>
       <blockquote class="journal">“${esc(r.journal)}”</blockquote>
-      ${r.pickup ? `<p class="pickup">주운 물건: <b>${esc(r.pickup)}</b></p>` : ""}
+      ${r.pickup ? `<div class="pickup"><b>🎁 ${esc(r.pickup)}</b>을(를) 주워 왔어요<br><small>${itemDesc(r.pickup, state.pickups[r.pickup] || 1)}${(state.pickups[r.pickup] || 1) > 1 ? ` (${Math.min(state.pickups[r.pickup], ITEM_MAX_LEVEL)}단계)` : ""}</small></div>` : ""}
       <button class="btn primary" data-act="next">${rest.length ? `다음 (${rest.length}명 남음)` : "확인"}</button>
     </div>`,
     (act) => {

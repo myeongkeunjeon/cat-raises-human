@@ -5,14 +5,15 @@
 import { CONFIG } from "./config.js";
 import { BUTLER_BY_ID } from "./data/butlers.js";
 import { CHEER_LINES } from "./data/journals.js";
-import { state, now, gainAffection } from "./state.js";
+import { BACKDROPS } from "./data/backdrops.js";
+import { state, now, gainAffection, itemBonus } from "./state.js";
 import { butlerSVG, catSVG } from "./art.js";
 import { play } from "./sound.js";
 import { esc } from "./ui.js";
 
 export function cheersLeft(id) {
   const w = state.butlers[id].work;
-  return w ? CONFIG.cheer.perShift - (w.cheers || 0) : 0;
+  return w ? CONFIG.cheer.perShift + itemBonus("cheerExtra") - (w.cheers || 0) : 0;
 }
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -33,8 +34,9 @@ export function startCheer(id, onDone) {
       <h3>${CONFIG.workplaces[place].name}에서 ${esc(def.name)} 지키기</h3>
       <p class="note">잔소리는 <b>톡!</b> 막고, 좋은 말은 그냥 두세요</p>
     </div>
+    <div class="mood" aria-label="집사 기운"><i></i></div>
     <div class="cheer-field scene-${place}">
-      <div class="mood"><i></i></div>
+      ${BACKDROPS[place]}
       <div class="cheer-butler">${butlerSVG(def)}</div>
       <div class="cheer-cat">${catSVG(state.cat.type)}</div>
       <div class="ready">준비</div>
@@ -144,7 +146,7 @@ export function startCheer(id, onDone) {
     let cut = 0, aff = 0;
     if (b.status === "working") {
       const w = b.work;
-      cut = (w.end - w.start) * C.maxTimeCut * ratio;
+      cut = (w.end - w.start) * (C.maxTimeCut + itemBonus("cheerCut") / 100) * ratio;
       w.end = Math.max(now(), w.end - cut);
       w.cheers = (w.cheers || 0) + 1;
       aff = ratio >= 0.5 ? gainAffection(id, Math.round(C.affection * ratio) || 1) : 0;

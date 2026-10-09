@@ -1,8 +1,9 @@
 // 근무: 출근 → 시간 경과 → 퇴근(정산 대기) → 집에서 정산 (SPEC 3-1)
 import { CONFIG } from "./config.js";
 import { BUTLER_BY_ID } from "./data/butlers.js";
-import { JOURNALS, DEFAULT_JOURNAL, PICKUPS } from "./data/journals.js";
-import { state, now, affectionStep } from "./state.js";
+import { JOURNALS, DEFAULT_JOURNAL } from "./data/journals.js";
+import { itemsAt } from "./data/items.js";
+import { state, now, affectionStep, itemBonus } from "./state.js";
 
 const HOUR = 3600e3;
 
@@ -47,7 +48,19 @@ export function expectedChuru(id, place, tired) {
   c *= 1 + affectionStep(b.affection) * CONFIG.affection.incomeBonusPerStep;
   if (tired) c *= 1 - CONFIG.fatigue.tiredPenalty;
   if (state.butlers.churuboss) c *= 1 + BUTLER_BY_ID.churuboss.incomeBonusAll;
+  c *= 1 + itemBonus("income", place) / 100;
   return Math.floor(c);
+}
+
+// 출근 피로 (집사 배율, 주운 물건 반영)
+export function workFatigue(id, place) {
+  const f = CONFIG.workplaces[place].fatigue * (BUTLER_BY_ID[id].fatigueMult || 1) - itemBonus("fatigue", place);
+  return Math.max(0, f);
+}
+
+// 근무 시간(분) (주운 물건 반영)
+export function workMinutes(place) {
+  return CONFIG.workplaces[place].minutes * (1 - itemBonus("time", place) / 100);
 }
 
 export function sendToWork(id, place, minutesOverride) {
@@ -56,9 +69,9 @@ export function sendToWork(id, place, minutesOverride) {
   const w = CONFIG.workplaces[place];
   const t = now();
   const tired = b.fatigue >= CONFIG.fatigue.tiredAt; // 출근 시점 피로
-  b.fatigue = Math.min(CONFIG.fatigue.max, b.fatigue + w.fatigue * (BUTLER_BY_ID[id].fatigueMult || 1));
+  b.fatigue = Math.min(CONFIG.fatigue.max, b.fatigue + workFatigue(id, place));
   b.status = "working";
-  b.work = { place, start: t, end: t + (minutesOverride ?? w.minutes) * 60e3, tired };
+  b.work = { place, start: t, end: t + (minutesOverride ?? workMinutes(place)) * 60e3, tired };
   state.stats.workByPlace[place] = (state.stats.workByPlace[place] || 0) + 1;
   return true;
 }
@@ -81,9 +94,10 @@ function finish(id) {
   let churu = expectedChuru(id, place, tired);
   let bonus = 0;
   if (def.bonusChuruChance && Math.random() < def.bonusChuruChance) bonus = def.bonusChuru;
+  if (Math.random() * 100 < itemBonus("lucky")) bonus += 10;
   let pickup = null;
   if (Math.random() < CONFIG.pickupChance) {
-    const list = PICKUPS[place];
+    const list = itemsAt(place);
     pickup = list[Math.floor(Math.random() * list.length)];
   }
   b.status = "done";
@@ -102,7 +116,7 @@ export function advanceWork(t, lastTick, events) {
       homeMs = t - Math.max(b.work.end, lastTick);
     }
     if (b.housed && homeMs > 0) {
-      b.fatigue = Math.max(0, b.fatigue - CONFIG.fatigue.recoverPerHour * (homeMs / HOUR));
+      b.fatigue = Math.max(0, b.fatigue - (CONFIG.fatigue.recoverPerHour + itemBonus("recover")) * (homeMs / HOUR));
     }
   }
   // 건물주 월세 적립
@@ -118,7 +132,7 @@ export function settle(id) {
   if (b.status !== "done") return null;
   const r = b.result;
   state.churu += r.churu;
-  if (r.pickup) state.pickups.push(r.pickup);
+  if (r.pickup) state.pickups[r.pickup] = (state.pickups[r.pickup] || 0) + 1;
   b.status = "home";
   b.work = null;
   b.result = null;

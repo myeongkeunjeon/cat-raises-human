@@ -2,14 +2,16 @@
 // 비트에 맞춰 화살표가 내려온다. 판정선에 닿을 때 같은 방향 버튼을 누른다.
 // 뒤로 갈수록 8분음표와 동시누르기가 늘어난다. 결과는 실패 없이 3단계.
 import { CONFIG } from "./config.js";
-import { BUTLER_BY_ID } from "./data/butlers.js";
-import { state, gainAffection } from "./state.js";
+import { BUTLER_BY_ID, KNEAD_THEMES } from "./data/butlers.js";
+import { state, gainAffection, itemBonus } from "./state.js";
 import { butlerSVG, catSVG } from "./art.js";
 import { play, audioClock, beatTrack } from "./sound.js";
 import { esc } from "./ui.js";
 
 const RESULT_NAME = { perfect: "완벽", good: "잘함", okay: "적당히" };
-const ARROWS = ["◀", "▼", "▲", "▶"];
+const DIRS = ["왼쪽", "아래", "위", "오른쪽"];
+// 고양이 발바닥 (발가락이 위). 레인마다 방향으로 돌린다
+const PAW = `<svg viewBox="0 0 40 40" aria-hidden="true"><ellipse cx="20" cy="27" rx="10" ry="8.5"/><ellipse cx="8.5" cy="17" rx="4" ry="5.2" transform="rotate(-25 8.5 17)"/><ellipse cx="15.5" cy="10" rx="4" ry="5.4" transform="rotate(-8 15.5 10)"/><ellipse cx="24.5" cy="10" rx="4" ry="5.4" transform="rotate(8 24.5 10)"/><ellipse cx="31.5" cy="17" rx="4" ry="5.2" transform="rotate(25 31.5 17)"/></svg>`;
 const JUDGE_TEXT = { perfect: "PERFECT", great: "GREAT", good: "GOOD", miss: "MISS" };
 const KNOT_SPOTS = { // 엎드린 집사 등 위 매듭 위치 (가로 %, 세로 %). 머리는 왼쪽, 발은 오른쪽
   shoulder: [[45, 36], [49, 43], [53, 35], [57, 42], [61, 37]],
@@ -19,8 +21,8 @@ const KNOT_SPOTS = { // 엎드린 집사 등 위 매듭 위치 (가로 %, 세로
 };
 const LEAD_BEATS = 4; // 시작 전 준비 박자 (비트만 나옴)
 
-// 악보: 앞부분은 4분음표, 중간부터 8분음표, 끝으로 갈수록 연타와 동시누르기
-function makeChart(K) {
+// 악보: 앞부분은 4분음표, 중간부터 8분음표, 끝으로 갈수록 연타와 동시누르기. dense: 테마별 밀도
+function makeChart(K, dense = 1) {
   const sp = 60 / K.bpm;
   const beats = Math.floor(K.seconds / sp);
   const notes = [];
@@ -29,8 +31,8 @@ function makeChart(K) {
   for (let b = 0; b < beats; b++) {
     const p = b / beats;
     const t = b * sp;
-    const eighth = p < 0.2 ? 0 : p < 0.5 ? 0.3 : p < 0.75 ? 0.55 : 0.8;
-    const jump = p < 0.4 ? 0 : p < 0.75 ? 0.15 : 0.25;
+    const eighth = (p < 0.2 ? 0 : p < 0.5 ? 0.3 : p < 0.75 ? 0.55 : 0.8) * dense;
+    const jump = (p < 0.4 ? 0 : p < 0.75 ? 0.15 : 0.25) * dense;
     const l = lane();
     notes.push({ t, lane: l });
     if (b % 2 === 0 && Math.random() < jump) { // 동시누르기
@@ -43,10 +45,13 @@ function makeChart(K) {
 }
 
 export function startKneading(id, onDone) {
-  const K = CONFIG.kneading;
+  const base = CONFIG.kneading;
+  const extra = itemBonus("kneadWindow"); // 주운 물건: 판정이 조금 너그러워짐
+  const theme = KNEAD_THEMES[id] || {};
+  const K = { ...base, bpm: theme.bpm || base.bpm, windows: Object.fromEntries(Object.entries(base.windows).map(([k, v]) => [k, v + extra])) };
   const def = BUTLER_BY_ID[id];
   const sp = 60 / K.bpm;
-  const notes = makeChart(K).map((n) => ({ ...n, s: null, el: null }));
+  const notes = makeChart(K, theme.dense).map((n) => ({ ...n, s: null, el: null }));
   const total = notes.length;
   const spots = KNOT_SPOTS[def.knots] || KNOT_SPOTS.back;
   const willSleep = Math.random() < K.sleepChance;
@@ -59,7 +64,7 @@ export function startKneading(id, onDone) {
   el.innerHTML = `
     <div class="knead-top">
       <button class="knead-quit">✕ 그만하기</button>
-      <span class="knead-name">${def.name}</span>
+      <span class="knead-name">${def.name}<small>♪ ${theme.title || "꾹꾹이"}</small></span>
       <span class="knead-time">${K.seconds}</span>
     </div>
     <div class="knead-stage">
@@ -70,14 +75,14 @@ export function startKneading(id, onDone) {
       </div>
       <div class="purr">그르릉…</div>
     </div>
-    <div class="lanes">
-      ${ARROWS.map((a, i) => `<div class="lane" data-lane="${i}"><span class="receptor">${a}</span></div>`).join("")}
+    <div class="lanes" style="background:${theme.bg || "#2b2420"}">
+      ${DIRS.map((d, i) => `<div class="lane" data-lane="${i}"><span class="receptor r${i}">${PAW}</span></div>`).join("")}
       <div class="judge"></div>
       <div class="knead-combo"></div>
       <div class="ready">준비</div>
     </div>
     <div class="pads">
-      ${ARROWS.map((a, i) => `<button class="pad" data-lane="${i}" aria-label="${a}">${a}</button>`).join("")}
+      ${DIRS.map((d, i) => `<button class="pad" data-lane="${i}" aria-label="${d}"><span class="r${i}">${PAW}</span></button>`).join("")}
     </div>`;
   document.getElementById("app").append(el);
 
@@ -88,7 +93,7 @@ export function startKneading(id, onDone) {
   for (const n of notes) {
     n.el = document.createElement("i");
     n.el.className = `arrow a${n.lane}`;
-    n.el.textContent = ARROWS[n.lane];
+    n.el.innerHTML = `<span class="r${n.lane}">${PAW}</span>`;
     lanes[n.lane].append(n.el);
   }
 
@@ -97,7 +102,7 @@ export function startKneading(id, onDone) {
   let nowSec, stopMusic = () => {};
   if (a) {
     const start = a.currentTime + LEAD_BEATS * sp + 0.1;
-    stopMusic = beatTrack(a, start - LEAD_BEATS * sp, K.bpm, LEAD_BEATS + Math.ceil(K.seconds / sp) + 1);
+    stopMusic = beatTrack(a, start - LEAD_BEATS * sp, K.bpm, LEAD_BEATS + Math.ceil(K.seconds / sp) + 1, theme);
     nowSec = () => a.currentTime - start;
   } else {
     const start = performance.now() + (LEAD_BEATS * sp + 0.1) * 1000;

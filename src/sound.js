@@ -114,17 +114,22 @@ function hiss(a, t, { dur, vol, hp }, out = a.destination) {
 
 // start(오디오 시각)부터 bpm으로 beats박 동안: 킥, 스네어, 하이햇, 귀여운 아르페지오. 반환값: 멈추는 함수
 const ARP = [523, 659, 784, 659, 587, 740, 880, 740, 523, 659, 784, 1047, 880, 784, 659, 587];
-export function beatTrack(a, start, bpm, beats) {
+export function beatTrack(a, start, bpm, beats, theme = {}) {
   const sp = 60 / bpm;
+  const arp = theme.arp || ARP, wave = theme.wave || "triangle", kick = theme.kick ?? 0.5;
   const out = a.createGain();
   out.connect(a.destination);
   for (let b = 0; b < beats; b++) {
     const t = start + b * sp;
-    hit(a, t, { freq: 150, to: 45, dur: 0.18, vol: 0.5 }, out);                          // 킥
+    hit(a, t, { freq: 150, to: 45, dur: 0.18, vol: kick }, out);                         // 킥
     if (b % 2 === 1) hiss(a, t, { dur: 0.12, vol: 0.18, hp: 1800 }, out);               // 스네어
     hiss(a, t + sp / 2, { dur: 0.04, vol: 0.06, hp: 7000 }, out);                       // 하이햇
-    if (b >= 4) hit(a, t + sp / 2, { freq: ARP[b % 16], dur: 0.16, type: "triangle", vol: 0.07 }, out); // 멜로디
-    if (b % 4 === 0) hit(a, t, { freq: ARP[b % 16] / 4, dur: sp * 1.8, type: "triangle", vol: 0.12 }, out); // 베이스
+    if (b >= 4) { // 멜로디 (8분음표 두 개씩)
+      const v = wave === "sine" ? 0.1 : wave === "triangle" ? 0.08 : 0.035;
+      hit(a, t, { freq: arp[(b * 2) % arp.length], dur: 0.15, type: wave, vol: v }, out);
+      hit(a, t + sp / 2, { freq: arp[(b * 2 + 1) % arp.length], dur: 0.15, type: wave, vol: v }, out);
+    }
+    if (b % 4 === 0) hit(a, t, { freq: arp[(b * 2) % arp.length] / 4, dur: sp * 1.8, type: "triangle", vol: 0.12 }, out); // 베이스
   }
   return () => out.gain.setTargetAtTime(0, a.currentTime, 0.05);
 }

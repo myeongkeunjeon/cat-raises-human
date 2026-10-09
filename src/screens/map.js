@@ -3,7 +3,7 @@ import { CONFIG } from "../config.js";
 import { BUTLER_BY_ID } from "../data/butlers.js";
 import { WORK_LINES } from "../data/journals.js";
 import { state, now } from "../state.js";
-import { slotsOf, workingAt, nextExpand, expand, canWork, expectedChuru, sendToWork } from "../work.js";
+import { slotsOf, workingAt, nextExpand, expand, canWork, expectedChuru, sendToWork, workFatigue, workMinutes } from "../work.js";
 import { butlerSVG } from "../art.js";
 import { openSheet, closeSheet, toast } from "../ui.js";
 import { fatigueColor } from "./home.js";
@@ -13,7 +13,8 @@ import { startCheer, cheersLeft } from "../cheer.js";
 let app;
 
 function fmtMinutes(m) {
-  return m >= 60 ? `${m / 60}시간` : `${m}분`;
+  if (m >= 60) return `${Math.round((m / 60) * 10) / 10}시간`;
+  return m >= 1 ? `${Math.round(m * 10) / 10}분` : `${Math.round(m * 60)}초`;
 }
 
 export function fmtLeft(ms) {
@@ -56,7 +57,7 @@ export function render(el, a) {
         <div class="place-slots">자리 ${ids.length} / ${slotsOf(key)}</div>
       </div>
       <div class="place-info">
-        <span>⏱ ${fmtMinutes(w.minutes)}</span>
+        <span>⏱ ${fmtMinutes(workMinutes(key))}</span>
         <span>🐟 ${w.churu}</span>
         <span>피로 +${w.fatigue}</span>
       </div>
@@ -112,14 +113,14 @@ function openPicker(place) {
       <span class="pick-body">
         <span class="pick-name"><b>${def.name}</b>${tags}</span>
         <span class="fbar wide"><i style="width:${f}%;background:${fatigueColor(f)}"></i></span>
-        <small>피로 ${f} → ${Math.min(100, Math.round(b.fatigue + w.fatigue * (def.fatigueMult || 1)))}</small>
+        <small>피로 ${f} → ${Math.min(100, Math.round(b.fatigue + workFatigue(id, place)))}</small>
       </span>
       <span class="pick-churu">🐟 ${refuse ? "-" : expectedChuru(id, place, tired)}</span>
     </button>`;
   }).join("");
   openSheet(`
     <h3>${w.name}에 보낼 집사</h3>
-    <p class="note">${fmtMinutes(w.minutes)} 근무 · 피로 +${w.fatigue}</p>
+    <p class="note">${fmtMinutes(workMinutes(place))} 근무 · 피로 +${w.fatigue}</p>
     <div class="pick-list">${rows || `<p class="note">보낼 수 있는 집사가 없어요. 퇴근한 집사는 집에서 먼저 정산해 주세요.</p>`}</div>`,
     (act, el) => {
       if (act === "refuse") return toast("너무 지쳐서 출근을 거부했어요. 꾹꾹이로 쉬게 해주세요");

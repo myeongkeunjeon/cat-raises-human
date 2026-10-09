@@ -1,5 +1,6 @@
 // 디버그 메뉴: URL에 ?debug=1 을 붙이면 톱니바퀴 버튼이 나온다
 import { BUTLERS } from "./data/butlers.js";
+import { ITEMS } from "./data/items.js";
 import { state, tick, addButler, resetSave, statsText, now } from "./state.js";
 import { openSheet, toast, esc } from "./ui.js";
 
@@ -39,6 +40,7 @@ function menuHTML() {
       <button class="btn sm" data-act="f0">모든 집사 피로 0</button>
       <button class="btn sm" data-act="f100">모든 집사 피로 100</button>
       <button class="btn sm" data-act="aff">모든 집사 호감도 +20</button>
+      <button class="btn sm" data-act="item">주운 물건 아무거나 +1</button>
     </div>
     <div class="row">
       <select id="dbg-butler">${opts}</select>
@@ -66,6 +68,13 @@ function openMenu(app) {
       case "ticket": state.freeTickets += 1; break;
       case "f0": all.forEach((b) => (b.fatigue = 0)); break;
       case "f100": all.forEach((b) => (b.fatigue = 100)); break;
+      case "item": {
+        const names = Object.keys(ITEMS);
+        const n = names[Math.floor(Math.random() * names.length)];
+        state.pickups[n] = (state.pickups[n] || 0) + 1;
+        toast(`${n} +1`);
+        break;
+      }
       case "aff": all.forEach((b) => (b.affection = Math.min(100, b.affection + 20))); tick().forEach(toast); break;
       case "give": {
         const id = (lastPick = document.getElementById("dbg-butler").value);

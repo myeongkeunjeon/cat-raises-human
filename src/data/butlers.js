@@ -31,3 +31,26 @@ export const BUTLERS = [
 ];
 
 export const BUTLER_BY_ID = Object.fromEntries(BUTLERS.map((b) => [b.id, b]));
+
+// 꾹꾹이 테마: 집사마다 곡 제목·빠르기·멜로디·색이 다르다
+// arp: 8분음표 멜로디(Hz), wave: 멜로디 음색, kick: 킥 세기, bg: 레인 배경, dense: 악보 밀도(전설일수록 빽빽)
+const C4 = 261.6, D4 = 293.7, Eb4 = 311.1, E4 = 329.6, F4 = 349.2, G4 = 392, A4 = 440, Bb4 = 466.2, B4 = 493.9,
+  C5 = 523.3, D5 = 587.3, Eb5 = 622.3, E5 = 659.3, F5 = 698.5, G5 = 784, A5 = 880, B5 = 987.8, C6 = 1046.5;
+export const KNEAD_THEMES = {
+  overtime:   { title: "야근 블루스",       bpm: 120, wave: "triangle", kick: 0.45, bg: "#1f2740", dense: 1,
+                arp: [C5, Eb5, F5, G5, Bb4, C5, Eb5, F5, G4, Bb4, C5, Eb5, F5, Eb5, C5, Bb4] },
+  clerk:      { title: "편의점 삑삑 송",    bpm: 132, wave: "square",   kick: 0.4,  bg: "#1d3a2b", dense: 1,
+                arp: [E5, G5, C6, G5, D5, G5, B5, G5, C5, E5, A5, E5, D5, F5, A5, F5] },
+  rookie:     { title: "현장 망치 비트",    bpm: 128, wave: "sawtooth", kick: 0.7,  bg: "#3a2a1a", dense: 1,
+                arp: [G4, G4, D5, G4, A4, A4, E5, A4, C5, C5, G5, C5, D5, C5, A4, G4] },
+  student:    { title: "새벽 세 시 로파이", bpm: 120, wave: "sine",     kick: 0.35, bg: "#2d2440", dense: 1,
+                arp: [A4, C5, E5, G5, F4, A4, C5, E5, C4, E4, G4, B4, G4, B4, D5, F5] },
+  freelancer: { title: "마감 직전 펑크",    bpm: 136, wave: "square",   kick: 0.5,  bg: "#3d2b26", dense: 1,
+                arp: [D5, D5, F5, D5, G5, F5, D5, C5, D5, D5, A5, G5, F5, D5, C5, A4] },
+  churuboss:  { title: "츄르 공장 행진곡",  bpm: 128, wave: "triangle", kick: 0.55, bg: "#24324a", dense: 1.15,
+                arp: [C5, E5, G5, C6, G5, E5, C5, G4, F4, A4, C5, F5, G4, B4, D5, G5] },
+  vet:        { title: "진료실 산책",       bpm: 124, wave: "sine",     kick: 0.4,  bg: "#1f3a36", dense: 1.15,
+                arp: [E5, D5, C5, D5, E5, E5, E5, G4, D5, D5, D5, G4, E5, G5, G5, C5] },
+  landlord:   { title: "건물주 스윙",       bpm: 132, wave: "triangle", kick: 0.6,  bg: "#3a1622", dense: 1.3,
+                arp: [G4, B4, D5, F5, E5, D5, B4, G4, A4, C5, E5, G5, F5, E5, C5, A4] },
+};

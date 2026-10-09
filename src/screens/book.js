@@ -4,6 +4,7 @@ import { BUTLERS, BUTLER_BY_ID, GRADES } from "../data/butlers.js";
 import { state, affectionStep } from "../state.js";
 import { butlerSVG } from "../art.js";
 import { openSheet, esc } from "../ui.js";
+import { ITEMS, ITEM_MAX_LEVEL, itemDesc } from "../data/items.js";
 import { play } from "../sound.js";
 
 const UNKNOWN_SMELL = "킁킁… 아직 모르겠다";
@@ -20,9 +21,21 @@ export function render(el) {
   el.innerHTML = `
     <h2 class="screen-title">집사 도감 <small>${count} / ${BUTLERS.length}</small></h2>
     <div class="book-grid">${cells}</div>
-    <h3 class="sub-title">주운 물건</h3>
-    <p class="pickups">${state.pickups.length ? state.pickups.map(esc).join(", ") : "아직 없어요"}</p>`;
+    <h3 class="sub-title">주운 물건 <small>${Object.keys(state.pickups).length} / ${Object.keys(ITEMS).length}</small></h3>
+    <p class="note">집사들이 일터에서 주워 와요. 같은 물건을 더 주우면 효과가 세져요 (최대 ${ITEM_MAX_LEVEL}단계)</p>
+    <div class="items">${Object.keys(ITEMS).map(itemCard).join("")}</div>`;
   el.querySelectorAll(".book-cell:not(.unmet)").forEach((c) => c.addEventListener("click", () => openDetail(c.dataset.id)));
+}
+
+const PLACE_ICON = { store: "🏪", office: "🏢", construction: "🏗️" };
+
+function itemCard(name) {
+  const n = state.pickups[name] || 0;
+  if (!n) return `<div class="item unknown"><span class="item-icon">?</span><div><b>???</b><small>${CONFIG.workplaces[ITEMS[name].place].name}에서 주울 수 있어요</small></div></div>`;
+  const lv = Math.min(n, ITEM_MAX_LEVEL);
+  return `<div class="item"><span class="item-icon">${PLACE_ICON[ITEMS[name].place]}</span>
+    <div><b>${esc(name)}</b> <span class="item-lv">${"★".repeat(lv)}${"☆".repeat(ITEM_MAX_LEVEL - lv)}</span>
+    <small>${itemDesc(name, n)}${n > 1 ? ` · ${n}개` : ""}</small></div></div>`;
 }
 
 function openDetail(id) {
