@@ -1,7 +1,7 @@
 // 집: 방 단면, 그릇 속 고양이, 바닥에 선 집사들
 import { CONFIG } from "../config.js";
 import { BUTLER_BY_ID } from "../data/butlers.js";
-import { state, affectionStep } from "../state.js";
+import { state, affectionStep, catLevelInfo, housedCount } from "../state.js";
 import { catSVG, butlerSVG } from "../art.js";
 import { openSheet, toast, esc } from "../ui.js";
 
@@ -23,9 +23,17 @@ export function render(el) {
     </button>`;
   }).join("");
 
+  // 수용 인원과 입주 대기 (집이 좁으면 도감에만 등록된 집사)
+  const lv = catLevelInfo();
+  const waiting = Object.keys(state.butlers).length - housedCount();
+  const house = `집사 ${housedCount()} / ${lv.capacity}명` + (waiting
+    ? ` · 입주 대기 ${waiting}명<br><small>${lv.next ? `호감도 합계 ${lv.sum} / ${lv.next.need} → 묘생 Lv.${lv.next.level}이 되면 ${lv.next.capacity}명까지 살 수 있어요` : "집이 가장 넓어요"}</small>`
+    : "");
+
   el.innerHTML = `
     <div class="room">
       <div class="cat-name">${esc(state.cat.name)}</div>
+      <div class="house-info">${house}</div>
       <div class="cat">${catSVG(state.cat.type)}</div>
       <div class="floor-row">${butlers || `<p class="empty">집에 집사가 없어요</p>`}</div>
       <div class="floor"></div>
