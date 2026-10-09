@@ -268,20 +268,37 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .knead-body.melt { transform: scale(1.25, .55); }
 .knead-body.melt-big { transform: scale(1.5, .38); }
 
-.beat { position: relative; width: 120px; height: 120px; margin: 4px auto 10px; flex: none; }
-.beat-target, .beat-ring { position: absolute; inset: 30px; border-radius: 50%; }
-.beat-target { background: #f3d9c2; border: 4px solid var(--accent); }
-.beat-ring { border: 4px solid #e9874a99; will-change: transform; }
-.beat-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; }
-.beat-text.perfect { color: var(--accent); font-size: 18px; }
-.beat-text.good { color: #5a8f4a; }
-.beat-text.miss { color: var(--muted); }
-
-.feet { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: none; }
-.foot { height: 110px; border-radius: 24px; border: 3px solid var(--line); background: var(--card); font-size: 20px; font-weight: bold;
-  -webkit-user-select: none; user-select: none; touch-action: manipulation; transition: transform .05s; }
-.foot.next { border-color: var(--accent); background: #fde6d4; }
-.foot:active { transform: scale(.96); background: #fbd2b2; }
+/* 4방향 레인 (펌프풍) */
+.lanes { position: relative; flex: 1.3; min-height: 220px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+  border-radius: 16px; background: #2b2420; padding: 0 6px; overflow: hidden; }
+.knead.beat-on .lanes { background: #332a25; }
+.lane { position: relative; border-radius: 10px; transition: background .08s; }
+.lane.flash { background: #ffffff18; }
+.receptor { position: absolute; left: 50%; top: 85%; transform: translate(-50%, -50%); font-size: 30px; color: #ffffff40; line-height: 1; }
+.knead.beat-on .receptor { color: #ffffff70; }
+.arrow { position: absolute; left: 50%; top: 0; margin: -18px 0 0 -18px; width: 36px; height: 36px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; color: #fff; font-style: normal; will-change: top; }
+.arrow.a0 { background: #f0647d; } .arrow.a1 { background: #4aa3f0; } .arrow.a2 { background: #f5b83d; } .arrow.a3 { background: #5cc48a; }
+.arrow.done { opacity: 0 !important; transform: scale(1.8) !important; transition: .15s; }
+.arrow.missed { filter: grayscale(1); opacity: .35 !important; }
+.judge { position: absolute; left: 0; right: 0; top: 30%; text-align: center; font-size: 30px; font-weight: 900; letter-spacing: 1px; pointer-events: none; opacity: 0; }
+.judge.pop { animation: judgePop .45s ease-out; }
+.judge.perfect { color: #ffd34d; } .judge.great { color: #7fe0a8; } .judge.good { color: #8cc4ff; } .judge.miss { color: #aaa; }
+@keyframes judgePop { 0% { opacity: 1; transform: scale(1.4); } 70% { opacity: 1; transform: scale(1); } 100% { opacity: 0; } }
+.knead-combo { position: absolute; left: 0; right: 0; top: 46%; text-align: center; color: #fff; font-size: 13px; letter-spacing: 2px; pointer-events: none; }
+.knead-combo b { display: block; font-size: 34px; letter-spacing: 0; line-height: 1; }
+.knead-combo.pop b { animation: comboPop .2s ease-out; }
+@keyframes comboPop { from { transform: scale(1.3); } }
+.ready { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 34px; font-weight: 900; pointer-events: none; }
+.pads { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex: none; margin-top: 8px; }
+.pad { height: 84px; border-radius: 18px; border: 0; font-size: 30px; color: #fff; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+.pad[data-lane="0"] { background: #f0647d; } .pad[data-lane="1"] { background: #4aa3f0; } .pad[data-lane="2"] { background: #f5b83d; } .pad[data-lane="3"] { background: #5cc48a; }
+.pad.hit { transform: scale(.93); filter: brightness(1.2); }
+.knead-quit { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 4px 10px; font-size: 13px; }
+.knead-top { align-items: center; }
+.knead .knead-stage { flex: .8; min-height: 120px; }
+.judges { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; font-size: 12px; font-weight: bold; margin: 6px 0 0; }
+.judges .perfect { color: #c99500; } .judges .great { color: #2e9a5c; } .judges .good { color: #2f7cc4; } .judges .miss { color: #999; }
 
 .knead-result { position: absolute; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 2;
   background: var(--card); border-radius: 20px; padding: 18px; text-align: center; box-shadow: 0 8px 30px #0002; animation: rise .35s ease-out; }
@@ -298,11 +315,24 @@ select { font: inherit; padding: 6px; border-radius: 8px; border: 1px solid var(
 .cheer-badge { position: absolute; right: 8px; top: 8px; z-index: 1; font-size: 12px; background: var(--accent); color: #fff; border-radius: 999px; padding: 3px 8px; }
 .scene[aria-disabled] .cheer-badge { background: #bbb; }
 .cheer-head h3 { margin: 4px 0 2px; }
-.cheer-field { position: relative; flex: 1; margin: 12px 0; border-radius: 20px; overflow: hidden; border-bottom: 4px solid #b9a68d; }
-.cheer-butler { position: absolute; bottom: -4px; left: 50%; width: 120px; transform: translateX(-50%); }
-.snack { position: absolute; width: 56px; height: 56px; border: 0; border-radius: 50%; background: #fffaf2; box-shadow: 0 4px 12px #0002; animation: popIn .2s ease-out; }
-.snack::before { content: ""; position: absolute; left: 50%; top: 10px; width: 12px; height: 36px; margin-left: -6px; border-radius: 3px; transform: rotate(25deg);
-  background: linear-gradient(#f08a6c 0 70%, #f8f6f2 70% 80%, #f08a6c 80%); }
-.snack.got { transform: scale(1.4); opacity: 0; transition: .25s; }
-@keyframes popIn { from { transform: scale(0); } }
-.cheer-score { text-align: center; font-size: 18px; flex: none; }
+.cheer-field { position: relative; flex: 1; margin: 12px 0; border-radius: 20px; overflow: hidden; border-bottom: 4px solid #b9a68d; touch-action: manipulation; }
+.cheer-butler { position: absolute; bottom: -4px; left: 50%; width: 120px; transform: translateX(-50%); transform-origin: 50% 100%; }
+.cheer-butler.happy { animation: cheerHop .4s ease-out; }
+@keyframes cheerHop { 40% { transform: translateX(-50%) translateY(-14px); } }
+.cheer-butler.hurt { animation: slump .5s ease-out; }
+@keyframes slump { 30% { transform: translateX(-50%) scale(1.05, .85) rotate(-4deg); } }
+.cheer-cat { position: absolute; bottom: 0; left: calc(50% + 40px); width: 84px; transform-origin: 30% 80%; }
+.cheer-cat.swipe { animation: swipe .25s ease-out; }
+@keyframes swipe { 40% { transform: rotate(-14deg) translateY(-8px) scale(1.08); } }
+.mood { position: absolute; left: 12px; right: 12px; top: 10px; height: 8px; border-radius: 4px; background: #0001; z-index: 1; }
+.mood i { display: block; height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
+.bubble { position: absolute; transform: translate(-50%, -50%); z-index: 2; max-width: 46%; padding: 8px 12px; border-radius: 16px; border: 0;
+  font: inherit; font-size: 14px; line-height: 1.25; box-shadow: 0 3px 10px #0002; animation: popIn .2s ease-out; }
+.bubble.bad { background: #fff; color: #9b2c22; border: 2px solid #e05a4f; }
+.bubble.good { background: #fff7d6; color: #6b5200; border: 2px solid #f2c335; }
+.bubble.burst { transform: translate(-50%, -50%) scale(1.5); opacity: 0; transition: .25s; }
+.bubble.oops { transform: translate(-50%, -50%) rotate(20deg) scale(.6); opacity: 0; transition: .3s; }
+@keyframes popIn { from { transform: translate(-50%, -50%) scale(0); } }
+.cheer-score { text-align: center; font-size: 16px; flex: none; }
+.cheer .ready { color: var(--ink); }
+

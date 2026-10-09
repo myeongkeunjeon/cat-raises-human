@@ -14,9 +14,13 @@ export const CONFIG = {
   affection: { max: 100, stepSize: 20, incomeBonusPerStep: 0.05,
                petAmount: 2, petPerDay: 3, duplicate: 20 },
 
+  // v0.1 이후 변경: 40초 왼발/오른발 → 20초 펌프·러브비트풍 리듬게임
+  // 4방향 화살표가 비트에 맞춰 내려오고, 뒤로 갈수록 8분음표·동시누르기가 늘어난다
   kneading: {
-    seconds: 40, beatInterval: 0.6,
-    perfectWindow: 0.12, goodWindow: 0.25,
+    seconds: 20, bpm: 128,
+    fallTime: 1.0,                                  // 화살표가 판정선까지 내려오는 시간(초)
+    windows: { perfect: 0.05, great: 0.09, good: 0.14 }, // 판정 범위(±초)
+    points:  { perfect: 1, great: 0.8, good: 0.5 },     // 정확도 계산용 점수 (놓침 0)
     results: [ // 정확도 높은 순으로 검사
       { id: "perfect", minAccuracy: 0.9, fatigue: -100, affection: 10, churu: 20 },
       { id: "good",    minAccuracy: 0.6, fatigue: -50,  affection: 5,  churu: 0 },
@@ -33,7 +37,10 @@ export const CONFIG = {
   },
 
   // 응원 가기: 근무 중인 집사에게 간식 배달 미니게임 → 근무 시간 단축 + 호감도
-  cheer: { perShift: 3, snacks: 8, maxTimeCut: 0.15, affection: 2 },
+  // 응원 가기(집사 지키기): 일터의 스트레스 말풍선이 집사에게 날아온다. 고양이가 톡 쳐서 막고, 좋은 말은 통과시킨다.
+  // 점점 빨리, 많이 날아온다. 막고 받은 비율만큼 근무 시간 단축 + 호감도. 근무 한 번에 perShift번.
+  cheer: { perShift: 3, seconds: 10, spawnStart: 0.8, spawnEnd: 0.35, flightStart: 2.4, flightEnd: 1.2,
+           goodChance: 0.25, maxTimeCut: 0.15, affection: 2 },
 
   startChuru: 100,
   dayResetHourKST: 5,

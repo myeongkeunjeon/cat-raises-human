@@ -62,14 +62,15 @@ export function render(el, a) {
     const btn = e.target.closest(".butler");
     if (btn) {
       if (state.butlers[btn.dataset.id].status === "done") return openSettle([btn.dataset.id]);
-      play("pop");
+      const g = BUTLER_BY_ID[btn.dataset.id].grade;
+      play(g === "legend" ? "legend" : g === "rare" ? "rare" : "pop");
       bounce(btn);
       return setTimeout(() => openButler(btn.dataset.id), 250);
     }
     const act = e.target.closest("[data-act]")?.dataset.act;
     if (act === "cat") return poke(e.target.closest(".cat"));
     if (act === "all") openSettle(doneIds);
-    if (act === "rent") { play("churu"); toast(`월세 🐟 ${collectRent()} 받았어요`); app.changed(); }
+    if (act === "rent") { play("coin"); play("churu"); toast(`월세 🐟 ${collectRent()} 받았어요`); app.changed(); }
   };
 }
 
