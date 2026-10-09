@@ -78,6 +78,7 @@ function start() {
     else {
       renderTopbar();
       if (current === "map") map.refreshLive(document.getElementById("screen"));
+      if (current === "home") home.refreshLive(document.getElementById("screen"));
     }
     if (++secs % 10 === 0 && saveEnabled) save();
   }, 1000);

@@ -4,6 +4,9 @@ import { BUTLER_BY_ID } from "../data/butlers.js";
 import { state, affectionStep, catLevelInfo, housedCount, pet } from "../state.js";
 import { startKneading } from "../kneading.js";
 import { catStage, butlerSVG, CAT_LOOKS } from "../art.js";
+import { roomSVG, isoPct, timeOfDay, WALK, CAT_SPOT } from "../room.js";
+import { fmtLeft } from "./map.js";
+import { now } from "../state.js";
 import { play } from "../sound.js";
 import { openSheet, closeSheet, toast, esc } from "../ui.js";
 import { settle, collectRent } from "../work.js";
@@ -17,47 +20,89 @@ export function fatigueColor(f) {
   return "var(--good)";
 }
 
+// 집사들이 서 있는 바닥 칸 위치 (다시 그려도 유지)
+const pos = {};
+let wanderTimer = 0;
+
+function randomSpot() {
+  const r = () => WALK.min + Math.random() * (WALK.max - WALK.min);
+  let p;
+  do p = { gx: r(), gy: r() }; while (Math.hypot(p.gx - CAT_SPOT.gx, p.gy - CAT_SPOT.gy) < 1.3); // 고양이 자리는 비워 둔다
+  return p;
+}
+
+function placeStyle({ gx, gy }) {
+  const p = isoPct(gx, gy);
+  return `left:${p.left}%;top:${p.top}%;z-index:${Math.round(p.top * 10)}`;
+}
+
+const EMOTES = ["♪", "…", "💭", "✨", "♡"];
+
 export function render(el, a) {
   app = a;
+  const lv = catLevelInfo();
   const ids = Object.keys(state.butlers).filter((id) => state.butlers[id].housed && state.butlers[id].status !== "working");
+  for (const id of Object.keys(pos)) if (!ids.includes(id)) delete pos[id];
   const butlers = ids.map((id) => {
     const b = state.butlers[id];
+    pos[id] ||= randomSpot();
     const f = Math.round(b.fatigue);
     const done = b.status === "done";
-    return `<button class="butler ${done ? "done" : ""}" data-id="${id}">
-      ${done ? `<span class="envelope" aria-label="정산 대기">✉️</span>` : ""}
-      <div class="fbar"><i style="width:${f}%;background:${fatigueColor(f)}"></i></div>
-      ${butlerSVG(BUTLER_BY_ID[id])}
-      <span class="label">${BUTLER_BY_ID[id].name}</span>
+    return `<button class="butler actor ${done ? "done" : ""}" data-id="${id}" style="${placeStyle(pos[id])}" aria-label="${BUTLER_BY_ID[id].name}">
+      <span class="actor-body">
+        ${done ? `<span class="envelope" aria-label="정산 대기">✉️</span>` : f >= CONFIG.fatigue.tiredAt ? `<span class="tired" aria-label="지침">💦</span>` : ""}
+        <span class="emote"></span>
+        ${butlerSVG(BUTLER_BY_ID[id])}
+      </span>
+      <span class="shadow"></span>
     </button>`;
   }).join("");
 
   // 수용 인원과 입주 대기 (집이 좁으면 도감에만 등록된 집사)
-  const lv = catLevelInfo();
   const waiting = Object.keys(state.butlers).length - housedCount();
-  const house = `집사 ${housedCount()} / ${lv.capacity}명` + (waiting
-    ? ` · 입주 대기 ${waiting}명<br><small>${lv.next ? `호감도 합계 ${lv.sum} / ${lv.next.need} → 묘생 Lv.${lv.next.level}이 되면 ${lv.next.capacity}명까지 살 수 있어요` : "집이 가장 넓어요"}</small>`
-    : "");
-
   const working = Object.values(state.butlers).filter((b) => b.status === "working").length;
   const doneIds = ids.filter((id) => state.butlers[id].status === "done");
   const rent = Math.floor(state.rent || 0);
 
   el.innerHTML = `
-    <div class="room">
-      <div class="cat-name">${esc(state.cat.name)}</div>
-      <div class="house-info">${house}</div>
-      ${working ? `<div class="house-info">출근 중 ${working}명 · 동네 탭에서 볼 수 있어요</div>` : ""}
-      <div class="window ${skyClass()}"><i></i></div>
-      <button class="cat" data-act="cat" aria-label="${esc(state.cat.name)} 쓰다듬기">${catStage(state.cat.type, lv.level)}</button>
-      <div class="cat-look">묘생 Lv.${lv.level} · ${CAT_LOOKS[lv.level] || ""}</div>
+    <div class="home">
+      <div class="home-head">
+        <div class="cat-title"><b>${esc(state.cat.name)}</b><span>묘생 Lv.${lv.level} · ${CAT_LOOKS[lv.level] || ""}</span></div>
+        <div class="chips">
+          <span class="chip">🏠 ${housedCount()}/${lv.capacity}</span>
+          ${waiting ? `<span class="chip warn">대기 ${waiting}</span>` : ""}
+          ${working ? `<span class="chip">💼 출근 ${working}</span>` : ""}
+        </div>
+      </div>
+      <div class="diorama ${timeOfDay()}">
+        ${roomSVG(lv.level)}
+        <div class="actors">
+          <button class="cat actor" data-act="cat" style="${placeStyle(CAT_SPOT)}" aria-label="${esc(state.cat.name)} 쓰다듬기">
+            <span class="actor-body">${catStage(state.cat.type, lv.level)}</span><span class="shadow"></span>
+          </button>
+          ${butlers}
+        </div>
+        <i class="mote" style="left:48%;top:40%"></i><i class="mote" style="left:56%;top:52%;animation-delay:1.3s"></i><i class="mote" style="left:63%;top:44%;animation-delay:2.6s"></i>
+      </div>
+      <div class="roster">${rosterHTML()}</div>
+      ${waiting && lv.next ? `<p class="hint">호감도 합계 ${lv.sum}/${lv.next.need} → 묘생 Lv.${lv.next.level}이 되면 ${lv.next.capacity}명까지 살 수 있어요</p>` : ""}
+      ${!ids.length ? `<p class="hint">집에 있는 집사가 없어요. 동네에서 퇴근을 기다려 주세요</p>` : ""}
       <div class="home-actions">
         ${doneIds.length > 1 ? `<button class="btn primary" data-act="all">✉️ 모두 정산 (${doneIds.length})</button>` : ""}
         ${rent > 0 ? `<button class="btn rent" data-act="rent">💰 월세 봉투 🐟 ${rent}</button>` : ""}
       </div>
-      <div class="floor-row">${butlers || `<p class="empty">집에 집사가 없어요</p>`}</div>
-      <div class="floor"></div>
     </div>`;
+
+  // 집사들이 방 안을 돌아다닌다
+  clearInterval(wanderTimer);
+  wanderTimer = setInterval(() => {
+    if (!el.isConnected || !el.querySelector(".diorama")) return clearInterval(wanderTimer);
+    const actors = [...el.querySelectorAll(".butler.actor:not(.walking)")];
+    if (!actors.length) return;
+    const btn = actors[Math.floor(Math.random() * actors.length)];
+    if (Math.random() < 0.3) return emote(btn);
+    walk(btn);
+  }, 1400);
 
   el.onclick = (e) => {
     const btn = e.target.closest(".butler");
@@ -65,20 +110,70 @@ export function render(el, a) {
       if (state.butlers[btn.dataset.id].status === "done") return openSettle([btn.dataset.id]);
       const g = BUTLER_BY_ID[btn.dataset.id].grade;
       play(g === "legend" ? "legend" : g === "rare" ? "rare" : "pop");
-      bounce(btn);
+      bounce(btn.querySelector(".actor-body"));
       return setTimeout(() => openButler(btn.dataset.id), 250);
     }
+    const ros = e.target.closest("[data-ros]");
+    if (ros) {
+      const st = state.butlers[ros.dataset.ros].status;
+      if (st === "done") return openSettle([ros.dataset.ros]);
+      if (st === "working") return toast("근무 중이에요. 동네에서 응원 갈 수 있어요");
+      return openButler(ros.dataset.ros);
+    }
     const act = e.target.closest("[data-act]")?.dataset.act;
-    if (act === "cat") return poke(e.target.closest(".cat"));
+    if (act === "cat") return poke(e.target.closest(".cat").querySelector(".actor-body"));
     if (act === "all") openSettle(doneIds);
     if (act === "rent") { play("coin"); play("churu"); toast(`월세 🐟 ${collectRent()} 받았어요`); app.changed(); }
   };
 }
 
-// 한국 시간에 맞춘 창밖 하늘
-function skyClass() {
-  const h = (new Date().getUTCHours() + 9) % 24;
-  return h < 6 ? "night" : h < 9 ? "dawn" : h < 17 ? "day" : h < 20 ? "dusk" : "night";
+// 아래 집사 상태 줄: 피로, 정산 대기, 근무 중 남은 시간
+function rosterHTML() {
+  const ids = Object.keys(state.butlers).filter((id) => state.butlers[id].housed);
+  return ids.map((id) => {
+    const b = state.butlers[id];
+    const def = BUTLER_BY_ID[id];
+    const f = Math.round(b.fatigue);
+    const status = b.status === "done" ? `<em class="st done">✉️ 정산</em>`
+      : b.status === "working" ? `<em class="st work">${CONFIG.workplaces[b.work.place].name} <span data-end="${b.work.end}">${fmtLeft(b.work.end - now())}</span></em>`
+      : f >= CONFIG.fatigue.tiredAt ? `<em class="st tired">지침</em>` : `<em class="st">쉬는 중</em>`;
+    return `<button class="ros is-${b.status}" data-ros="${id}">
+      <span class="ros-face"><img src="assets/butlers/${id}.svg" alt=""></span>
+      <span class="ros-body"><b>${def.name}</b>${status}<span class="fbar"><i style="width:${f}%;background:${fatigueColor(f)}"></i></span></span>
+    </button>`;
+  }).join("");
+}
+
+// 1초마다: 근무 남은 시간 갱신
+export function refreshLive(el) {
+  const t = now();
+  el.querySelectorAll(".roster [data-end]").forEach((s) => (s.textContent = fmtLeft(Number(s.dataset.end) - t)));
+}
+
+// 한 집사를 새 자리로 걸어가게
+function walk(btn) {
+  const id = btn.dataset.id;
+  const from = pos[id], to = randomSpot();
+  const a = isoPct(from.gx, from.gy), b = isoPct(to.gx, to.gy);
+  const dist = Math.hypot(b.left - a.left, b.top - a.top);
+  const ms = Math.max(900, dist * 90);
+  btn.classList.add("walking");
+  btn.querySelector(".actor-body").classList.toggle("flip", b.left < a.left);
+  btn.style.transition = `left ${ms}ms linear, top ${ms}ms linear`;
+  pos[id] = to;
+  btn.style.left = `${b.left}%`;
+  btn.style.top = `${b.top}%`;
+  btn.style.zIndex = Math.round(Math.max(a.top, b.top) * 10);
+  setTimeout(() => { btn.classList.remove("walking"); btn.style.zIndex = Math.round(b.top * 10); }, ms);
+}
+
+// 머리 위에 작은 감정 표현
+function emote(btn) {
+  const b = state.butlers[btn.dataset.id];
+  const e = btn.querySelector(".emote");
+  if (!b || !e) return;
+  e.textContent = b.fatigue >= CONFIG.fatigue.tiredAt ? "💤" : EMOTES[Math.floor(Math.random() * EMOTES.length)];
+  e.classList.remove("show"); void e.offsetWidth; e.classList.add("show");
 }
 
 function bounce(el) {
@@ -161,7 +256,7 @@ function openButler(id) {
         app.changed();
         toast(`${def.name} 호감도 +${n}`);
         const btn = document.querySelector(`.butler[data-id="${id}"]`);
-        if (btn) { bounce(btn); heart(btn); }
+        if (btn) { bounce(btn.querySelector(".actor-body")); heart(btn.querySelector(".actor-body")); }
       }
     });
 }
